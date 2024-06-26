@@ -9,9 +9,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SearchBar
 import androidx.compose.material3.Text
@@ -24,11 +27,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
+import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
+import com.bumptech.glide.integration.compose.GlideImage
 import com.sajeg.olibrary.ui.theme.OLibraryTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import org.jsoup.nodes.Element
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -44,14 +49,14 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalGlideComposeApi::class)
 @Composable
 fun MainCompose(modifier: Modifier = Modifier) {
     var searchQuery by remember { mutableStateOf("") }
     var isActive by remember { mutableStateOf(false) }
 //        var result by remember { mutableStateListOf<Element>() }
-    val result: MutableState<MutableList<Element>> =
-        remember { mutableStateOf(mutableStateListOf<Element>()) }
+    val result: MutableState<MutableList<Book>> =
+        remember { mutableStateOf(mutableStateListOf<Book>()) }
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.Center
@@ -61,10 +66,8 @@ fun MainCompose(modifier: Modifier = Modifier) {
             onQueryChange = {
                 searchQuery = it
                 CoroutineScope(Dispatchers.IO).launch {
-                    result.value = WebsiteFetcher.fetchWebsiteContent(
-                        "https://www.stadtbibliothek.oldenburg.de" +
-                                "/olsuchergebnisse?p_r_p_arena_urn%3Aarena_" +
-                                "search_query=${searchQuery.replace(" ", "+")}"
+                    result.value = WebsiteFetcher.searchBooks(
+                        searchQuery
                     ).toMutableList()
                 }
             },
@@ -82,8 +85,25 @@ fun MainCompose(modifier: Modifier = Modifier) {
             },
             trailingIcon = {},
             content = {
-                for (book in result.value) {
-                    Text(text = book.text())
+                LazyColumn {
+                    for (book in result.value) {
+                        item {
+                            ListItem(
+                                headlineContent = { Text(text = book.title) },
+                                leadingContent = { GlideImage(
+                                    model = book.imageLink,
+                                    contentDescription = "The Book Cover",
+                                    modifier = Modifier.size(60.dp)
+                                ) },
+                                supportingContent = {
+                                    Text(
+                                        text = "Von ${book.author} aus dem Jahr ${book.year} " +
+                                                "auf ${book.language} als ${book.genre}"
+                                    )
+                                }
+                            )
+                        }
+                    }
                 }
             }
         )
