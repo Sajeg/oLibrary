@@ -17,8 +17,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SearchBar
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -27,10 +28,11 @@ import androidx.compose.ui.res.painterResource
 import com.sajeg.olibrary.ui.theme.OLibraryTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
-import java.io.Serializable
+import org.jsoup.nodes.Element
 import java.net.HttpURLConnection
 import java.net.URL
 
@@ -46,8 +48,9 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-    private suspend fun fetchWebsiteContent(url: String): Serializable {
-        return CoroutineScope(Dispatchers.IO).async {
+
+    private suspend fun fetchWebsiteContent(url: String): List<Element> {
+        return withContext(Dispatchers.IO) {
             try {
                 Log.d("WebsiteFetcher", "Fetching content from: $url")
                 val websiteUrl = URL(url)
@@ -72,26 +75,39 @@ class MainActivity : ComponentActivity() {
 //                    "Unsupported content type: $contentType"
 //                })
                 val doc: Document = Jsoup.parse(inputStream.bufferedReader().use { it.readText() })
-                val priceElement = doc.select("div.arena-record-title a span")
-                return@async priceElement.text()
+                val priceElement:List<Element> = doc.select("div.arena-record-title a span").toList()
+                Log.d("Title", priceElement.toString())
+                return@withContext priceElement
             } catch (e: Exception) {
                 Log.e("WebsiteFetcher", "Error fetching content: $e")
+                return@withContext listOf()
             }
-        }.await()
+        }
     }
 
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
-    fun MainCompose(modifier: Modifier = Modifier){
+    fun MainCompose(modifier: Modifier = Modifier) {
         var searchQuery by remember { mutableStateOf("") }
         var isActive by remember { mutableStateOf(false) }
-        Row (
-            modifier= Modifier.fillMaxWidth(),
+//        var result by remember { mutableStateListOf<Element>() }
+        val result: MutableState<MutableList<Element>> = remember { mutableStateOf(mutableStateListOf<Element>()) }
+        Row(
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Center
-        ){
+        ) {
             SearchBar(
                 query = searchQuery,
-                onQueryChange = { searchQuery = it },
+                onQueryChange = {
+                    searchQuery = it
+                    CoroutineScope(Dispatchers.IO).launch {
+                        result.value =  fetchWebsiteContent(
+                            "https://www.stadtbibliothek.oldenburg.de" +
+                                    "/olsuchergebnisse?p_r_p_arena_urn%3Aarena_" +
+                                    "search_query=${searchQuery.replace(" ", "+")}"
+                        ).toMutableList()
+                    }
+                },
                 onSearch = {},
                 active = isActive,
                 onActiveChange = { isActive = it },
@@ -106,15 +122,9 @@ class MainActivity : ComponentActivity() {
                 },
                 trailingIcon = {},
                 content = {
-                    var state by remember { mutableStateOf("") }
-                    LaunchedEffect(key1 = state) {
-                        state =  fetchWebsiteContent(
-                            "https://www.stadtbibliothek.oldenburg.de" +
-                                    "/olsuchergebnisse?p_r_p_arena_urn%3Aarena_" +
-                                    "search_query=${searchQuery.replace(" ", "+")}"
-                        ).toString()
+                    for (book in result.value) {
+                        Text(text = book.text())
                     }
-                    Text(text = state)
                 }
             )
         }
