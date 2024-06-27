@@ -1,10 +1,12 @@
 package com.sajeg.olibrary
 
 import android.content.Intent
+import android.graphics.Bitmap
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,11 +18,18 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import com.bumptech.glide.Glide
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
-import com.bumptech.glide.integration.compose.GlideImage
 import com.sajeg.olibrary.ui.theme.OLibraryTheme
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 class BookInfo : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
@@ -74,17 +83,36 @@ fun DisplayBookInfo(modifier: Modifier) {
         modifier = modifier
             .fillMaxWidth()
     ) {
-        GlideImage(
-            model = BookData.getCurrentBook().imageLink,
-            contentDescription = "The Book Cover",
-            modifier = Modifier
-                .fillMaxWidth()
-            //.aspectRatio(0.6f)
-            //.blur(15.dp)
-        )
-    }
+//        GlideImage(
+//            model = BookData.getCurrentBook().imageLink,
+//            contentDescription = "The Book Cover",
+//            modifier = Modifier
+//                .fillMaxWidth()
+//            //.aspectRatio(0.6f)
+//            //.blur(15.dp)
+//        )
 
-//    var bitmap = remember { mutableStateOf<Bitmap?>(null) }
+        val bitmap = remember { mutableStateOf<Bitmap?>(null) }
+        val glideImage =
+            Glide.with(LocalContext.current).asBitmap().load(BookData.getCurrentBook().imageLink)
+        LaunchedEffect(key1 = BookData.getCurrentBook().imageLink) {
+            withContext(Dispatchers.IO) {
+                val futureTarget = glideImage.submit()
+                bitmap.value = futureTarget.get()
+                futureTarget.cancel(false)
+            }
+        }
+        if (bitmap.value != null) {
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                bitmap.value!!.asImageBitmap()
+            }
+        } else {
+            // Display a loading indicator or placeholder image
+            // For example:
+            Text("Loading Image...")
+        }
+    }
+}
 //    LaunchedEffect(key1 = BookData.getCurrentBook().imageLink) {
 //        Glide.with(LocalContext.current)
 //            .asBitmap()
@@ -111,4 +139,3 @@ fun DisplayBookInfo(modifier: Modifier) {
 //            )
 //        }
 //    }
-}
