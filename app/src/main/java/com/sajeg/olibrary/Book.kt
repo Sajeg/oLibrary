@@ -6,6 +6,7 @@ class Book(
     val year: String,
     val language: String,
     val genre: String,
-    val imageLink: String
+    val imageLink: String,
+    val url: String
 ) {
 }

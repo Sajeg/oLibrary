@@ -42,6 +42,9 @@ object WebsiteFetcher {
                 val image: List<String> =
                     lastDocument.select("div.arena-book-jacket a img").map { it.attr("src") }
                         .toList()
+                val url: List<String> =
+                    lastDocument.select("div.arena-record-title a").map { it.attr("href") }
+                        .toList()
 
                 for (i in 0..<
                         minOf(
@@ -50,7 +53,8 @@ object WebsiteFetcher {
                             year.size,
                             language.size,
                             genre.size,
-                            image.size
+                            image.size,
+                            url.size
                         )) {
                     Log.d("Image", image[i])
                     output.add(
@@ -60,7 +64,8 @@ object WebsiteFetcher {
                             year = year[i].text(),
                             language = language[i].text(),
                             genre = genre[i].text(),
-                            imageLink = "https://www.stadtbibliothek.oldenburg.de" + image[i]
+                            imageLink = "https://www.stadtbibliothek.oldenburg.de" + image[i],
+                            url = url[i]
                         )
                     )
                 }
