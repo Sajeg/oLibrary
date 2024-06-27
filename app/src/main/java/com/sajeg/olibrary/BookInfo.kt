@@ -6,13 +6,11 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -27,6 +25,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
@@ -37,6 +37,7 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bumptech.glide.Glide
@@ -45,6 +46,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 var background: Color = Color.Transparent
+var width: Dp = 0F.dp
+var height: Dp = 0F.dp
 
 class BookInfo : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
@@ -106,7 +109,7 @@ class GradientImagePainter(
     override fun DrawScope.onDraw() {
         drawIntoCanvas { canvas ->
             with(imagePainter) {
-                draw(size, alpha = 1.0f)
+                draw(Size(width.value, height.value), alpha = 1.0f)
             }
 
             drawRect(
@@ -115,9 +118,9 @@ class GradientImagePainter(
                         Color.Transparent,
                         background
                     ),
-                    endY = size.width
+                    endY = width.value
                 ),
-                size = size
+                size = Size(width.value, height.value)
             )
         }
     }
@@ -125,6 +128,9 @@ class GradientImagePainter(
 
 @Composable
 fun DisplayBookCover(modifier: Modifier) {
+    val configuration = LocalConfiguration.current
+    height = configuration.screenHeightDp.dp
+    width = configuration.screenWidthDp.dp
     background = MaterialTheme.colorScheme.background
     val bitmap = remember { mutableStateOf<Bitmap?>(null) }
     val glideImage =
@@ -139,23 +145,31 @@ fun DisplayBookCover(modifier: Modifier) {
     Column(
         modifier = modifier
             .fillMaxSize()
-    ) {
-        if (bitmap.value != null) {
-            val (height, width) = LocalConfiguration.current.run { screenHeightDp.dp to screenWidthDp.dp }
-            Row(
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Image(
-                    painter = GradientImagePainter(BitmapPainter(bitmap.value!!.asImageBitmap())),
-//                    bitmap = bitmap.value!!.asImageBitmap(),
-                    contentDescription = "Cover",
-                    modifier = Modifier.size(width + 170.dp),
-//                    contentScale = ContentScale.FillWidth,
-                )
+            .drawBehind {
+                if (bitmap.value != null) {
+                    drawIntoCanvas {
+                        with(GradientImagePainter(BitmapPainter(bitmap.value!!.asImageBitmap()))) {
+                            draw(Size(width.value, height.value))
+                        }
+                    }
+                }
             }
-        } else {
-            Text("Loading Image...")
-        }
+    ) {
+//        if (bitmap.value != null) {
+//            Row(
+//                horizontalArrangement = Arrangement.Center
+//            ) {
+//                Image(
+//                    painter = GradientImagePainter(BitmapPainter(bitmap.value!!.asImageBitmap())),
+////                    bitmap = bitmap.value!!.asImageBitmap(),
+//                    contentDescription = "Cover",
+//                    modifier = Modifier.size(width + 170.dp),
+////                    contentScale = ContentScale.FillWidth,
+//                )
+//            }
+//        } else {
+//            Text("Loading Image...")
+//        }
     }
 }
 
