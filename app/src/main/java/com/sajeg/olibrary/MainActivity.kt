@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SearchBar
@@ -85,24 +86,33 @@ fun MainCompose(modifier: Modifier = Modifier) {
             },
             trailingIcon = {},
             content = {
-                LazyColumn {
-                    for (book in result.value) {
-                        item {
-                            ListItem(
-                                headlineContent = { Text(text = book.title) },
-                                leadingContent = { GlideImage(
-                                    model = book.imageLink,
-                                    contentDescription = "The Book Cover",
-                                    modifier = Modifier.size(60.dp)
-                                ) },
-                                supportingContent = {
-                                    Text(
-                                        text = "Von ${book.author} aus dem Jahr ${book.year} " +
-                                                "auf ${book.language} als ${book.genre}"
-                                    )
-                                }
-                            )
+                if (result.value.isNotEmpty()) {
+
+                    LazyColumn {
+                        for (book in result.value) {
+                            item {
+                                ListItem(
+                                    headlineContent = { Text(text = book.title) },
+                                    leadingContent = {
+                                        GlideImage(
+                                            model = book.imageLink,
+                                            contentDescription = "The Book Cover",
+                                            modifier = Modifier.size(60.dp)
+                                        )
+                                    },
+                                    supportingContent = {
+                                        Text(
+                                            text = "Von ${book.author} aus dem Jahr ${book.year} " +
+                                                    "auf ${book.language} als ${book.genre}"
+                                        )
+                                    }
+                                )
+                            }
                         }
+                    }
+                } else {
+                    Row (Modifier.fillMaxWidth()){
+                        LinearProgressIndicator(Modifier.fillMaxWidth())
                     }
                 }
             }
