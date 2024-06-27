@@ -10,8 +10,15 @@ object BookData {
     private lateinit var currentBook: Book
     private lateinit var bookDetailsDoc: Document
 
-    fun getCurrentBook(): Book{
+    fun getCurrentBook(): Book {
         return currentBook
+    }
+
+    fun getDesc(): String? {
+        return try {
+            bookDetailsDoc.select("div.arena-detail-description div.arena-value span")
+                .lastOrNull()!!.text()
+        } catch (e:Exception) { null }
     }
 
     fun addBookData(
