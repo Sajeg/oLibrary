@@ -12,16 +12,20 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -30,13 +34,17 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.bumptech.glide.Glide
 import com.sajeg.olibrary.ui.theme.OLibraryTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+
+var background: Color = Color.Transparent
 
 class BookInfo : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
@@ -72,7 +80,12 @@ class BookInfo : ComponentActivity() {
                         )
                     }
                 ) { innerPadding ->
-                    DisplayBookInfo(Modifier.padding(innerPadding))
+                    LazyColumn {
+                        item {
+                            DisplayBookCover(Modifier.padding(innerPadding))
+                            DisplayBookInfo(Modifier.padding(innerPadding))
+                        }
+                    }
                 }
             }
         }
@@ -100,8 +113,9 @@ class GradientImagePainter(
                 brush = Brush.verticalGradient(
                     colors = listOf(
                         Color.Transparent,
-                        Color.White
-                    )
+                        background
+                    ),
+                    endY = size.width
                 ),
                 size = size
             )
@@ -110,44 +124,53 @@ class GradientImagePainter(
 }
 
 @Composable
-fun DisplayBookInfo(modifier: Modifier) {
+fun DisplayBookCover(modifier: Modifier) {
+    background = MaterialTheme.colorScheme.background
+    val bitmap = remember { mutableStateOf<Bitmap?>(null) }
+    val glideImage =
+        Glide.with(LocalContext.current).asBitmap().load(BookData.getCurrentBook().imageLink)
+    LaunchedEffect(key1 = BookData.getCurrentBook().imageLink) {
+        withContext(Dispatchers.IO) {
+            val futureTarget = glideImage.submit()
+            bitmap.value = futureTarget.get()
+            futureTarget.cancel(false)
+        }
+    }
     Column(
         modifier = modifier
             .fillMaxSize()
     ) {
-        val bitmap = remember { mutableStateOf<Bitmap?>(null) }
-        val glideImage =
-            Glide.with(LocalContext.current).asBitmap().load(BookData.getCurrentBook().imageLink)
-        LaunchedEffect(key1 = BookData.getCurrentBook().imageLink) {
-            withContext(Dispatchers.IO) {
-                val futureTarget = glideImage.submit()
-                bitmap.value = futureTarget.get()
-                futureTarget.cancel(false)
-            }
-        }
         if (bitmap.value != null) {
+            val (height, width) = LocalConfiguration.current.run { screenHeightDp.dp to screenWidthDp.dp }
             Row(
                 horizontalArrangement = Arrangement.Center
             ) {
-//                val newBitmap = Bitmap.createBitmap(
-//                    bitmap.value!!.asImageBitmap().width,
-//                    bitmap.value!!.asImageBitmap().height,
-//                    bitmap.value!!.config
-//                )
-//                val canvas = android.graphics.Canvas(newBitmap)
-//                canvas.drawBitmap(bitmap.value!!, 0f, 0f, Paint())
-
                 Image(
                     painter = GradientImagePainter(BitmapPainter(bitmap.value!!.asImageBitmap())),
 //                    bitmap = bitmap.value!!.asImageBitmap(),
                     contentDescription = "Cover",
-                    contentScale = ContentScale.FillWidth,
+                    modifier = Modifier.size(width + 170.dp),
+//                    contentScale = ContentScale.FillWidth,
                 )
             }
         } else {
-            // Display a loading indicator or placeholder image
-            // For example:
             Text("Loading Image...")
+        }
+    }
+}
+
+@Composable
+fun DisplayBookInfo(modifier: Modifier) {
+    Column(
+        modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(text = BookData.getCurrentBook().title, style = MaterialTheme.typography.displayLarge)
+        Text(text = "Von ${BookData.getCurrentBook().author}", style = MaterialTheme.typography.titleMedium)
+        Row (horizontalArrangement = Arrangement.Start){
+            Text(text = "Bla Bla Description", fontSize = 20.sp)
+            Text(text = "Bla Bla Data", fontSize = 20.sp)
         }
     }
 }
