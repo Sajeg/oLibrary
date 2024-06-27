@@ -6,10 +6,11 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -22,11 +23,17 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.painter.BitmapPainter
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import com.bumptech.glide.Glide
-import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.sajeg.olibrary.ui.theme.OLibraryTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -76,22 +83,38 @@ class BookInfo : ComponentActivity() {
     }
 }
 
-@OptIn(ExperimentalGlideComposeApi::class)
+class GradientImagePainter(
+    private val imagePainter: Painter
+) : Painter() {
+
+    override val intrinsicSize: androidx.compose.ui.geometry.Size
+        get() = imagePainter.intrinsicSize
+
+    override fun DrawScope.onDraw() {
+        drawIntoCanvas { canvas ->
+            with(imagePainter) {
+                draw(size, alpha = 1.0f)
+            }
+
+            drawRect(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        Color.Transparent,
+                        Color.White
+                    )
+                ),
+                size = size
+            )
+        }
+    }
+}
+
 @Composable
 fun DisplayBookInfo(modifier: Modifier) {
-    Box(
+    Column(
         modifier = modifier
-            .fillMaxWidth()
+            .fillMaxSize()
     ) {
-//        GlideImage(
-//            model = BookData.getCurrentBook().imageLink,
-//            contentDescription = "The Book Cover",
-//            modifier = Modifier
-//                .fillMaxWidth()
-//            //.aspectRatio(0.6f)
-//            //.blur(15.dp)
-//        )
-
         val bitmap = remember { mutableStateOf<Bitmap?>(null) }
         val glideImage =
             Glide.with(LocalContext.current).asBitmap().load(BookData.getCurrentBook().imageLink)
@@ -103,8 +126,23 @@ fun DisplayBookInfo(modifier: Modifier) {
             }
         }
         if (bitmap.value != null) {
-            Canvas(modifier = Modifier.fillMaxSize()) {
-                bitmap.value!!.asImageBitmap()
+            Row(
+                horizontalArrangement = Arrangement.Center
+            ) {
+//                val newBitmap = Bitmap.createBitmap(
+//                    bitmap.value!!.asImageBitmap().width,
+//                    bitmap.value!!.asImageBitmap().height,
+//                    bitmap.value!!.config
+//                )
+//                val canvas = android.graphics.Canvas(newBitmap)
+//                canvas.drawBitmap(bitmap.value!!, 0f, 0f, Paint())
+
+                Image(
+                    painter = GradientImagePainter(BitmapPainter(bitmap.value!!.asImageBitmap())),
+//                    bitmap = bitmap.value!!.asImageBitmap(),
+                    contentDescription = "Cover",
+                    contentScale = ContentScale.FillWidth,
+                )
             }
         } else {
             // Display a loading indicator or placeholder image
@@ -113,29 +151,3 @@ fun DisplayBookInfo(modifier: Modifier) {
         }
     }
 }
-//    LaunchedEffect(key1 = BookData.getCurrentBook().imageLink) {
-//        Glide.with(LocalContext.current)
-//            .asBitmap()
-//            .load(BookData.getCurrentBook().imageLink)
-//            .submit()
-//            .onSuccess { loadedBitmap ->
-//                bitmap.value = loadedBitmap
-//            }
-//    }
-//
-//    Canvas(modifier = Modifier.fillMaxSize()) {
-//        bitmap.value?.let {
-//            drawImage(ImageBitmap(it))
-//
-//            val path = androidx.compose.ui.graphics.Path().apply {
-//                // Define your custom path here
-//            }
-//            drawPath(
-//                path = path, brush = Brush.linearGradient(
-//                    colors = listOf(Color.Red, Color.Green),
-//                    start = Offset(0f, 0f),
-//                    end = Offset(size.width, size.height)
-//                )
-//            )
-//        }
-//    }
