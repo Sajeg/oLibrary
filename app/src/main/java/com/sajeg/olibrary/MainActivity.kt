@@ -40,7 +40,6 @@ import com.sajeg.olibrary.ui.theme.OLibraryTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlin.random.Random
 
 
 class MainActivity : ComponentActivity() {
@@ -52,11 +51,7 @@ class MainActivity : ComponentActivity() {
                 AppDatabase::class.java, "library"
             ).build()
 
-            val bookDao = db.bookDao()
-            var bid: Int = Random.nextInt(1,10000)
-            while (bookDao.getById(bid) != null) {
-                bid = Random.nextInt(1,10000)
-            }
+            WebsiteFetcher.refreshDatabase(db)
 //            bookDao.insertAll(BookDBItem(
 //                bid = bid,
 //                title = "Exilium",

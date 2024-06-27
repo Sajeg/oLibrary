@@ -1,6 +1,7 @@
 package com.sajeg.olibrary
 
 import android.util.Log
+import com.sajeg.olibrary.database.AppDatabase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jsoup.Jsoup
@@ -8,6 +9,7 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.net.HttpURLConnection
 import java.net.URL
+import kotlin.random.Random
 
 object WebsiteFetcher {
     private lateinit var lastDocument: Document
@@ -76,5 +78,27 @@ object WebsiteFetcher {
                 return@withContext listOf()
             }
         }
+    }
+
+    suspend fun refreshDatabase(db: AppDatabase) {
+        val bookDao = db.bookDao()
+        val websiteUrl = URL(
+            "https://www.stadtbibliothek.oldenburg.de/olsuchergebnisse?" +
+                    "p_r_p_arena_urn%3Aarena_search_query=mediaClass_index%3Abook"
+        )
+        val connection = websiteUrl.openConnection() as HttpURLConnection
+        connection.instanceFollowRedirects = true
+
+        val inputStream = connection.inputStream
+
+        var doc = Jsoup.parse(inputStream.bufferedReader().use { it.readText() })
+        var searchResults = doc.select("div.arena-record-container")
+        Log.d("SearchResults", searchResults.toString())
+
+        var bid: Int = Random.nextInt(1, 10000)
+        while (bookDao.getById(bid) != null) {
+            bid = Random.nextInt(1, 10000)
+        }
+
     }
 }
