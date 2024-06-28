@@ -1,7 +1,9 @@
 package com.sajeg.olibrary
 
+import android.app.DownloadManager
+import android.content.Context
+import android.net.Uri
 import android.util.Log
-import com.sajeg.olibrary.database.AppDatabase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jsoup.Jsoup
@@ -9,7 +11,6 @@ import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.net.HttpURLConnection
 import java.net.URL
-import kotlin.random.Random
 
 object WebsiteFetcher {
     private lateinit var lastDocument: Document
@@ -80,25 +81,16 @@ object WebsiteFetcher {
         }
     }
 
-    suspend fun refreshDatabase(db: AppDatabase) {
-        val bookDao = db.bookDao()
-        val websiteUrl = URL(
-            "https://www.stadtbibliothek.oldenburg.de/olsuchergebnisse?" +
-                    "p_r_p_arena_urn%3Aarena_search_query=mediaClass_index%3Abook"
-        )
-        val connection = websiteUrl.openConnection() as HttpURLConnection
-        connection.instanceFollowRedirects = true
+    fun startDBDownload(context: Context) {
+        val request =
+            DownloadManager.Request(Uri.parse("https://github.com/Sajeg/olibrary-db-updater/raw/master/data.json"))
+        request.setTitle("Updating the Database")
+        request.setDescription("This is to make sure you have the newest books")
+        request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE)
+        request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI)
 
-        val inputStream = connection.inputStream
-
-        var doc = Jsoup.parse(inputStream.bufferedReader().use { it.readText() })
-        var searchResults = doc.select("div.arena-record-container")
-        Log.d("SearchResults", searchResults.toString())
-
-        var bid: Int = Random.nextInt(1, 10000)
-        while (bookDao.getById(bid) != null) {
-            bid = Random.nextInt(1, 10000)
-        }
+        val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+        downloadManager.enqueue(request)
 
     }
 }
