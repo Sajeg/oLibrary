@@ -1,9 +1,12 @@
 package com.sajeg.olibrary
 
 import android.app.DownloadManager
+import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Intent
 import android.net.Uri
 import android.util.Log
+import android.widget.Toast
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jsoup.Jsoup
@@ -93,4 +96,31 @@ object WebsiteFetcher {
         downloadManager.enqueue(request)
 
     }
+
+    fun importBooks(){
+
+    }
+
+    class DownloadReceiver : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            if (DownloadManager.ACTION_DOWNLOAD_COMPLETE == intent.action) {
+                val downloadId = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)
+                val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+                val query = DownloadManager.Query().setFilterById(downloadId)
+                val cursor = downloadManager.query(query)
+
+                if (cursor.moveToFirst()) {
+                    val columnIndex = cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI)
+                    val fileUri = cursor.getString(columnIndex)
+                    // Handle the file URI
+                    if (fileUri != null) {
+                        // For example, show a toast or update the UI
+                        Toast.makeText(context, "Download complete: $fileUri", Toast.LENGTH_LONG).show()
+                    }
+                }
+                cursor.close()
+            }
+        }
+    }
+
 }
