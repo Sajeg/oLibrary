@@ -19,11 +19,11 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
--keep class androidx.compose.** { *; }
--keep class androidx.activity.compose.** { *; }
--keep class androidx.lifecycle.** { *; }
--keep class androidx.startup.** { *; }
--dontwarn androidx.startup.**
--dontwarn androidx.compose.**
--dontwarn androidx.activity.compose.**
--dontwarn androidx.lifecycle.**
+#-keep class androidx.compose.** { *; }
+#-keep class androidx.activity.compose.** { *; }
+#-keep class androidx.lifecycle.** { *; }
+#-keep class androidx.startup.** { *; }
+#-dontwarn androidx.startup.**
+#-dontwarn androidx.compose.**
+#-dontwarn androidx.activity.compose.**
+#-dontwarn androidx.lifecycle.**

@@ -85,6 +85,7 @@ object WebsiteFetcher {
     }
 
     fun startDBDownload(context: Context) {
+        Log.d("DownloadManager", "Started Download")
         val request =
             DownloadManager.Request(Uri.parse("https://github.com/Sajeg/olibrary-db-updater/raw/master/data.json"))
         request.setTitle("Updating the Database")
@@ -101,26 +102,27 @@ object WebsiteFetcher {
 
     }
 
-    class DownloadReceiver : BroadcastReceiver() {
-        override fun onReceive(context: Context, intent: Intent) {
-            if (DownloadManager.ACTION_DOWNLOAD_COMPLETE == intent.action) {
-                val downloadId = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)
-                val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-                val query = DownloadManager.Query().setFilterById(downloadId)
-                val cursor = downloadManager.query(query)
+}
 
-                if (cursor.moveToFirst()) {
-                    val columnIndex = cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI)
-                    val fileUri = cursor.getString(columnIndex)
-                    // Handle the file URI
-                    if (fileUri != null) {
-                        // For example, show a toast or update the UI
-                        Toast.makeText(context, "Download complete: $fileUri", Toast.LENGTH_LONG).show()
-                    }
+class DownloadReceiver : BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent) {
+        if (DownloadManager.ACTION_DOWNLOAD_COMPLETE == intent.action) {
+            val downloadId = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)
+            val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+            val query = DownloadManager.Query().setFilterById(downloadId)
+            val cursor = downloadManager.query(query)
+
+            if (cursor.moveToFirst()) {
+                val columnIndex = cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI)
+                val fileUri = cursor.getString(columnIndex)
+                // Handle the file URI
+                if (fileUri != null) {
+                    // For example, show a toast or update the UI
+                    Toast.makeText(context, "Download complete: $fileUri", Toast.LENGTH_LONG).show()
                 }
-                cursor.close()
             }
+            Log.d("DownloadManager", "Finished with id $downloadId")
+            cursor.close()
         }
     }
-
 }
