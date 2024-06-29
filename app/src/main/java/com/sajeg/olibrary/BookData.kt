@@ -22,21 +22,25 @@ object BookData {
     }
 
     fun addBookData(
+        recordID: Int,
         title: String,
         author: String,
         year: String,
         language: String,
         genre: String,
+        series: String,
         imageLink: String,
         url: String
     ) {
         currentBook = Book(
+            recordId = recordID,
             title = title,
             author = author,
             year = year,
             language = language,
             genre = genre,
-            imageLink = imageLink,
+            series = series,
+            imgUrl = imageLink,
             url = url
         )
 

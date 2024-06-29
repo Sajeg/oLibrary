@@ -54,11 +54,13 @@ class BookInfo : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         BookData.addBookData(
+            intent.getIntExtra("recordId", -1),
             intent.getStringExtra("title")!!,
             intent.getStringExtra("author")!!,
             intent.getStringExtra("year")!!,
             intent.getStringExtra("language")!!,
             intent.getStringExtra("genre")!!,
+            intent.getStringExtra("series")!!,
             intent.getStringExtra("imageLink")!!,
             intent.getStringExtra("url")!!
         )
@@ -134,8 +136,8 @@ fun DisplayBookCover(modifier: Modifier) {
     background = MaterialTheme.colorScheme.background
     val bitmap = remember { mutableStateOf<Bitmap?>(null) }
     val glideImage =
-        Glide.with(LocalContext.current).asBitmap().load(BookData.getCurrentBook().imageLink)
-    LaunchedEffect(key1 = BookData.getCurrentBook().imageLink) {
+        Glide.with(LocalContext.current).asBitmap().load(BookData.getCurrentBook().imgUrl)
+    LaunchedEffect(key1 = BookData.getCurrentBook().imgUrl) {
         withContext(Dispatchers.IO) {
             val futureTarget = glideImage.submit()
             bitmap.value = futureTarget.get()

@@ -36,9 +36,6 @@ import androidx.compose.ui.unit.dp
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.sajeg.olibrary.ui.theme.OLibraryTheme
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
 
 class MainActivity : ComponentActivity() {
@@ -92,12 +89,14 @@ class MainActivity : ComponentActivity() {
 
     private fun changeActivity(data: Book){
         startActivity(Intent(this, BookInfo::class.java).apply {
+            putExtra("recordId", data.recordId)
             putExtra("title", data.title)
             putExtra("author", data.author)
             putExtra("year", data.year)
             putExtra("language", data.language)
             putExtra("genre", data.genre)
-            putExtra("imageLink", data.imageLink)
+            putExtra("series", data.series)
+            putExtra("imageLink", data.imgUrl)
             putExtra("url", data.url)
         })
     }
@@ -118,11 +117,11 @@ class MainActivity : ComponentActivity() {
                 query = searchQuery,
                 onQueryChange = {
                     searchQuery = it
-                    CoroutineScope(Dispatchers.IO).launch {
-                        result.value = WebsiteFetcher.searchBooks(
-                            searchQuery
-                        ).toMutableList()
-                    }
+//                    CoroutineScope(Dispatchers.IO).launch {
+//                        result.value = WebsiteFetcher.searchBooks(
+//                            searchQuery
+//                        ).toMutableList()
+//                    }
                 },
                 onSearch = {},
                 active = isActive,
@@ -150,7 +149,7 @@ class MainActivity : ComponentActivity() {
                                         headlineContent = { Text(text = book.title) },
                                         leadingContent = {
                                             GlideImage(
-                                                model = book.imageLink,
+                                                model = book.imgUrl,
                                                 contentDescription = "The Book Cover",
                                                 modifier = Modifier.size(60.dp)
                                             )

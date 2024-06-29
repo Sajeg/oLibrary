@@ -16,7 +16,8 @@ class DownloadReceiver : BroadcastReceiver() {
             Log.d("DownloadReceiver", "Download completed. ID: $downloadId")
 
             if (downloadId != -1L) {
-                val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+                val downloadManager =
+                    context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
                 try {
                     val uri = downloadManager.getUriForDownloadedFile(downloadId)
                     if (uri != null) {
