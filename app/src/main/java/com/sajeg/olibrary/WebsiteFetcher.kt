@@ -1,17 +1,17 @@
 package com.sajeg.olibrary
 
 import android.app.DownloadManager
-import android.content.BroadcastReceiver
 import android.content.Context
-import android.content.Intent
 import android.net.Uri
+import android.util.JsonReader
 import android.util.Log
-import android.widget.Toast
+import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
 
@@ -90,7 +90,7 @@ object WebsiteFetcher {
             DownloadManager.Request(Uri.parse("https://github.com/Sajeg/olibrary-db-updater/raw/master/data.json"))
         request.setTitle("Updating the Database")
         request.setDescription("This is to make sure you have the newest books")
-        request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE)
+        request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
         request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI)
 
         val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
@@ -98,31 +98,30 @@ object WebsiteFetcher {
 
     }
 
-    fun importBooks(){
+    suspend fun importBooks(context: Context, fileUri: Uri){
+        context.contentResolver.openInputStream(fileUri)?.use { inputStream ->
+            JsonReader(InputStreamReader(inputStream)).use { reader ->
+                val gson = Gson()
+                reader.beginObject()
+                var lastUpdate = ""
+                while (reader.hasNext()) {
+                    when (reader.nextName()) {
+                        "last_update" -> lastUpdate = reader.nextString()
+                        "books" -> {
+                            reader.beginArray()
+                            while (reader.hasNext()) {
+                                // Import Book
+                            }
+                            reader.endArray()
+                        }
+                        else -> reader.skipValue()
+                    }
 
-    }
-
-}
-
-class DownloadReceiver : BroadcastReceiver() {
-    override fun onReceive(context: Context, intent: Intent) {
-        if (DownloadManager.ACTION_DOWNLOAD_COMPLETE == intent.action) {
-            val downloadId = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)
-            val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-            val query = DownloadManager.Query().setFilterById(downloadId)
-            val cursor = downloadManager.query(query)
-
-            if (cursor.moveToFirst()) {
-                val columnIndex = cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI)
-                val fileUri = cursor.getString(columnIndex)
-                // Handle the file URI
-                if (fileUri != null) {
-                    // For example, show a toast or update the UI
-                    Toast.makeText(context, "Download complete: $fileUri", Toast.LENGTH_LONG).show()
                 }
+                reader.endObject()
+                Log.d("Import", "Completed. Last update: $lastUpdate")
             }
-            Log.d("DownloadManager", "Finished with id $downloadId")
-            cursor.close()
         }
     }
+
 }

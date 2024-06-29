@@ -1,10 +1,12 @@
 package com.sajeg.olibrary
 
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -40,8 +42,20 @@ import kotlinx.coroutines.launch
 
 
 class MainActivity : ComponentActivity() {
+    private lateinit var downloadReceiver: DownloadReceiver
+
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        downloadReceiver = DownloadReceiver()
+
+//        ContextCompat.registerReceiver(
+//            this,
+//            downloadReceiver,
+//            IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE),
+//            ContextCompat.RECEIVER_NOT_EXPORTED
+//        )
+
         WebsiteFetcher.startDBDownload(this)
 //        lifecycleScope.launch(Dispatchers.IO) {
 //            val db = Room.databaseBuilder(
@@ -69,6 +83,11 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        unregisterReceiver(downloadReceiver)
     }
 
     private fun changeActivity(data: Book){
