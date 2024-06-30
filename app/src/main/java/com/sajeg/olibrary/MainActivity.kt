@@ -30,6 +30,7 @@ import androidx.compose.material3.SearchBar
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -54,6 +55,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import java.net.URL
 
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 
@@ -75,7 +77,6 @@ class MainActivity : ComponentActivity() {
             OLibraryTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     MainCompose(Modifier.padding(innerPadding))
-                    DownloadDialog(this)
                 }
             }
         }
@@ -104,14 +105,15 @@ class MainActivity : ComponentActivity() {
     fun DownloadDialog(context: Context) {
         var requiresUpdate by remember { mutableStateOf(false) }
         var alreadyRan by remember { mutableStateOf(false) }
-        val test by context.dataStore.data.map {
+        val version by context.dataStore.data.map {
             it[stringPreferencesKey("last_update")] ?: ""
         }.collectAsState(initial = "")
-        var firstDownload = test == ""
+        var firstDownload = version == ""
 
-        Log.d("Read", test)
+        Log.d("Read", version)
         if (!firstDownload) {
             // Check if update is available
+
             if (!alreadyRan) {
                 requiresUpdate = true
             }
@@ -181,8 +183,25 @@ class MainActivity : ComponentActivity() {
     fun MainCompose(modifier: Modifier = Modifier) {
         var searchQuery by remember { mutableStateOf("") }
         var isActive by remember { mutableStateOf(false) }
+        var newestVersion by remember { mutableStateOf("") }
         val result: MutableState<MutableList<Book>> =
             remember { mutableStateOf(mutableStateListOf<Book>()) }
+        val installedVersion by this.dataStore.data.map {
+            it[stringPreferencesKey("last_update")] ?: ""
+        }.collectAsState(initial = "")
+
+        if (newestVersion == "") {
+            LaunchedEffect(key1 = newestVersion) {
+                val websiteUrl =
+                    URL("https://raw.githubusercontent.com/Sajeg/olibrary-db-updater/master/info.json")
+                val content = websiteUrl.readText()
+                Log.d("Website", content)
+                newestVersion = "XXXXXXX"
+            }
+        }
+
+        DownloadDialog(this)
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Center

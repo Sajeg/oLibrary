@@ -7,8 +7,6 @@ import android.net.Uri
 import android.util.JsonReader
 import android.util.Log
 import android.widget.Toast
-import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.room.Room
 import com.sajeg.olibrary.database.AppDatabase
 import com.sajeg.olibrary.database.BookDBItem
@@ -46,92 +44,82 @@ object DatabaseBookManager {
         Log.d("Import", "Starting Import")
         context.contentResolver.openInputStream(fileUri)?.use { inputStream ->
             JsonReader(InputStreamReader(inputStream, "UTF-8")).use { reader ->
-                reader.beginObject()
-                var lastUpdate = ""
+
+                reader.beginArray()
                 while (reader.hasNext()) {
-                    when (reader.nextName()) {
-                        "last_update" -> lastUpdate = reader.nextString()
-                        "books" -> {
-                            reader.beginArray()
-                            while (reader.hasNext()) {
-                                reader.beginObject()
-                                var recordId: Int = -1
-                                var title = ""
-                                val author = mutableListOf<String>()
-                                var year = ""
-                                var language = ""
-                                var genre = ""
-                                var series = ""
-                                var imgUrl = ""
-                                var url = ""
+                    reader.beginObject()
+                    var recordId: Int = -1
+                    var title = ""
+                    val author = mutableListOf<String>()
+                    var year = ""
+                    var language = ""
+                    var genre = ""
+                    var series = ""
+                    var imgUrl = ""
+                    var url = ""
 
+                    while (reader.hasNext()) {
+                        when (reader.nextName()) {
+                            "recordId" -> recordId = reader.nextString().toInt()
+                            "title" -> title = reader.nextString()
+                            "author" -> {
+                                reader.beginArray()
                                 while (reader.hasNext()) {
-                                    when (reader.nextName()) {
-                                        "recordId" -> recordId = reader.nextString().toInt()
-                                        "title" -> title = reader.nextString()
-                                        "author" -> {
-                                            reader.beginArray()
-                                            while (reader.hasNext()) {
-                                                author.add(reader.nextString())
-                                            }
-                                            reader.endArray()
-                                        }
-
-                                        "year" -> year = reader.nextString()
-                                        "language" -> language = reader.nextString()
-                                        "genre" -> genre = reader.nextString()
-                                        "series" -> series = reader.nextString()
-                                        "imgUrl" -> imgUrl = reader.nextString()
-                                        "url" -> url = reader.nextString()
-                                        else -> reader.skipValue()
-                                    }
+                                    author.add(reader.nextString())
                                 }
-                                reader.endObject()
-                                try {
-                                    bookDao.importBook(
-                                        BookDBItem(
-                                            recordId,
-                                            title,
-                                            author.toString(),
-                                            year,
-                                            language,
-                                            genre,
-                                            series,
-                                            imgUrl,
-                                            url
-                                        )
-                                    )
-                                } catch (e: Exception) {
-                                    if (e == SQLiteConstraintException()) {
-                                        bookDao.updateBook(
-                                            BookDBItem(
-                                                recordId,
-                                                title,
-                                                author.toString(),
-                                                year,
-                                                language,
-                                                genre,
-                                                series,
-                                                imgUrl,
-                                                url
-                                            )
-                                        )
-                                    }
-                                }
+                                reader.endArray()
                             }
-                            reader.endArray()
+
+                            "year" -> year = reader.nextString()
+                            "language" -> language = reader.nextString()
+                            "genre" -> genre = reader.nextString()
+                            "series" -> series = reader.nextString()
+                            "imgUrl" -> imgUrl = reader.nextString()
+                            "url" -> url = reader.nextString()
+                            else -> reader.skipValue()
                         }
-
-                        else -> reader.skipValue()
                     }
+                    reader.endObject()
+                    try {
+                        bookDao.importBook(
+                            BookDBItem(
+                                recordId,
+                                title,
+                                author.toString(),
+                                year,
+                                language,
+                                genre,
+                                series,
+                                imgUrl,
+                                url
+                            )
+                        )
+                    } catch (e: Exception) {
+                        if (e == SQLiteConstraintException()) {
+                            bookDao.updateBook(
+                                BookDBItem(
+                                    recordId,
+                                    title,
+                                    author.toString(),
+                                    year,
+                                    language,
+                                    genre,
+                                    series,
+                                    imgUrl,
+                                    url
+                                )
+                            )
+                        }
+                    }
+                }
+                reader.endArray()
 
-                }
-                reader.endObject()
+
                 reader.close()
-                Log.d("Import", "Completed. Last update: $lastUpdate")
-                context.dataStore.edit { settings ->
-                    settings[stringPreferencesKey("last_update")] = lastUpdate
-                }
+                Log.d("Import", "Completed.")
+//                context.dataStore.edit { settings ->
+//                    settings[stringPreferencesKey("last_update")] = lastUpdate
+//                }
                 Toast.makeText(context, "Loaded all Books", Toast.LENGTH_SHORT).show()
             }
         }
