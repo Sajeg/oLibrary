@@ -6,9 +6,8 @@ import android.net.Uri
 import android.util.JsonReader
 import android.util.Log
 import androidx.room.Room
-import com.google.gson.Gson
-import com.google.gson.GsonBuilder
 import com.sajeg.olibrary.database.AppDatabase
+import com.sajeg.olibrary.database.BookDBItem
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jsoup.nodes.Document
@@ -104,12 +103,10 @@ object WebsiteFetcher {
             context,
             AppDatabase::class.java, "library"
         ).build()
+        val bookDao = db.bookDao()
         Log.d("Import", "Starting Import")
         context.contentResolver.openInputStream(fileUri)?.use { inputStream ->
-            JsonReader(InputStreamReader(inputStream)).use { reader ->
-                val gson = GsonBuilder()
-                    .registerTypeAdapter(Book::class.java, BookDeserializer())
-                    .create()
+            JsonReader(InputStreamReader(inputStream, "UTF-8")).use { reader ->
                 reader.beginObject()
                 var lastUpdate = ""
                 while (reader.hasNext()) {
@@ -118,9 +115,60 @@ object WebsiteFetcher {
                         "books" -> {
                             reader.beginArray()
                             while (reader.hasNext()) {
-                                val book: Book = gson.fromJson(reader, Book::class.java)
-                                //val bookDao = db.bookDao()
-                                Log.d("Import", "$book")
+                                reader.beginObject()
+                                var recordId: Int = -1
+                                var title = ""
+                                val author = mutableListOf<String>()
+                                var year = ""
+                                var language = ""
+                                var genre = ""
+                                var series = ""
+                                var imgUrl = ""
+                                var url = ""
+
+                                while (reader.hasNext()) {
+                                    when (reader.nextName()) {
+                                        "recordId" -> recordId = reader.nextString().toInt()
+                                        "title" -> title = reader.nextString()
+                                        "author" -> {
+                                            reader.beginArray()
+                                            while (reader.hasNext()) {
+                                                author.add(reader.nextString())
+                                            }
+                                            reader.endArray()
+                                        }
+
+                                        "year" -> year = reader.nextString()
+                                        "language" -> language = reader.nextString()
+                                        "genre" -> genre = reader.nextString()
+                                        "series" -> series = reader.nextString()
+                                        "imgUrl" -> imgUrl = reader.nextString()
+                                        "url" -> url = reader.nextString()
+                                        else -> reader.skipValue()
+                                    }
+                                    if (bookDao.getById(recordId) != null) {
+                                        while (reader.hasNext()) {
+                                            reader.skipValue()
+                                        }
+                                    }
+                                }
+                                reader.endObject()
+                                if (bookDao.getById(recordId) == null) {
+                                    Log.d("Import", recordId.toString())
+                                    bookDao.importBook(
+                                        BookDBItem(
+                                            recordId,
+                                            title,
+                                            author.toString(),
+                                            year,
+                                            language,
+                                            genre,
+                                            series,
+                                            imgUrl,
+                                            url
+                                        )
+                                    )
+                                }
                             }
                             reader.endArray()
                         }
@@ -130,6 +178,7 @@ object WebsiteFetcher {
 
                 }
                 reader.endObject()
+                reader.close()
                 Log.d("Import", "Completed. Last update: $lastUpdate")
             }
         }

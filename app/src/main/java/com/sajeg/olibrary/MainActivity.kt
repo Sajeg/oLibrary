@@ -46,32 +46,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         downloadReceiver = DownloadReceiver()
 
-//        ContextCompat.registerReceiver(
-//            this,
-//            downloadReceiver,
-//            IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE),
-//            ContextCompat.RECEIVER_NOT_EXPORTED
-//        )
-
+//        Uncomment to start the download and import
         WebsiteFetcher.startDBDownload(this)
-//        lifecycleScope.launch(Dispatchers.IO) {
-//            val db = Room.databaseBuilder(
-//                applicationContext,
-//                AppDatabase::class.java, "library"
-//            ).build()
 
-
-//            bookDao.insertAll(BookDBItem(
-//                bid = bid,
-//                title = "Exilium",
-//                author = "Hadler, Colin",
-//                year = "2023",
-//                language = "Deutsch",
-//                genre = "JungLe thrill",
-//                imageUrl = "https://www.sajeg.org",
-//                url = "https://www.sajeg.org"
-//            ))
-//        }
         enableEdgeToEdge()
         setContent {
             OLibraryTheme {
