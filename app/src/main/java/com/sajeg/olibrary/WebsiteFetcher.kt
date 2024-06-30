@@ -2,6 +2,7 @@ package com.sajeg.olibrary
 
 import android.app.DownloadManager
 import android.content.Context
+import android.database.sqlite.SQLiteConstraintException
 import android.net.Uri
 import android.util.JsonReader
 import android.util.Log
@@ -90,7 +91,7 @@ object WebsiteFetcher {
             DownloadManager.Request(Uri.parse("https://github.com/Sajeg/olibrary-db-updater/raw/master/data.json"))
         request.setTitle("Updating the Database")
         request.setDescription("This is to make sure you have the newest books")
-        request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+        request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE)
         request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI)
 
         val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
@@ -146,15 +147,9 @@ object WebsiteFetcher {
                                         "url" -> url = reader.nextString()
                                         else -> reader.skipValue()
                                     }
-                                    if (bookDao.getById(recordId) != null) {
-                                        while (reader.hasNext()) {
-                                            reader.skipValue()
-                                        }
-                                    }
                                 }
                                 reader.endObject()
-                                if (bookDao.getById(recordId) == null) {
-                                    Log.d("Import", recordId.toString())
+                                try {
                                     bookDao.importBook(
                                         BookDBItem(
                                             recordId,
@@ -168,6 +163,24 @@ object WebsiteFetcher {
                                             url
                                         )
                                     )
+                                    Log.d("Import", recordId.toString())
+                                } catch (e: Exception) {
+                                    if (e == SQLiteConstraintException()) {
+                                        bookDao.updateBook(
+                                            BookDBItem(
+                                                recordId,
+                                                title,
+                                                author.toString(),
+                                                year,
+                                                language,
+                                                genre,
+                                                series,
+                                                imgUrl,
+                                                url
+                                            )
+                                        )
+                                    }
+                                    Log.d("Update", recordId.toString())
                                 }
                             }
                             reader.endArray()

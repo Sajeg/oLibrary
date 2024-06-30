@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
+import androidx.room.Update
 import com.sajeg.olibrary.Book
 
 @Dao
@@ -16,10 +17,10 @@ interface BookDao {
     fun getById(id: Int): Book?
 
     @Insert
-    fun insertAll(vararg books: BookDBItem)
-
-    @Insert
     fun importBook(book: BookDBItem)
+
+    @Update
+    fun updateBook(book: BookDBItem)
 
     @Delete
     fun delete(book: BookDBItem)
