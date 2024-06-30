@@ -4,17 +4,16 @@ import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
+import com.sajeg.olibrary.Book
 
 @Dao
 interface BookDao {
-    @Query("SELECT * FROM bookdbitem")
-    fun getAll(): List<BookDBItem>
 
-    @Query("SELECT * FROM bookdbitem WHERE title LIKE :titleQuery")
-    fun findByTitle(titleQuery: String): List<BookDBItem>
+    @Query("SELECT * FROM books WHERE books MATCH :query")
+    fun search(query: String): List<Book>
 
-    @Query("SELECT * FROM bookdbitem WHERE recordId LIKE :id")
-    fun getById(id: Int): BookDBItem?
+    @Query("SELECT * FROM books WHERE rowid LIKE :id")
+    fun getById(id: Int): Book?
 
     @Insert
     fun insertAll(vararg books: BookDBItem)

@@ -2,11 +2,13 @@ package com.sajeg.olibrary.database
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
+import androidx.room.Fts4
 import androidx.room.PrimaryKey
 
-@Entity
+@Fts4
+@Entity(tableName = "Books")
 data class BookDBItem(
-    @PrimaryKey val recordId: Int,
+    @PrimaryKey @ColumnInfo(name = "rowid") val recordId: Int,
     @ColumnInfo(name = "title") val title: String,
     @ColumnInfo(name = "author") val author: String,
     @ColumnInfo(name = "year") val year: String,

@@ -33,19 +33,28 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.room.Room
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
+import com.sajeg.olibrary.database.AppDatabase
 import com.sajeg.olibrary.ui.theme.OLibraryTheme
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 
 class MainActivity : ComponentActivity() {
     private lateinit var downloadReceiver: DownloadReceiver
+    private lateinit var db: AppDatabase
 
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         downloadReceiver = DownloadReceiver()
-
+        db = Room.databaseBuilder(
+            this,
+            AppDatabase::class.java, "library"
+        ).build()
 //        Uncomment to start the download and import
         WebsiteFetcher.startDBDownload(this)
 
@@ -64,7 +73,7 @@ class MainActivity : ComponentActivity() {
         unregisterReceiver(downloadReceiver)
     }
 
-    private fun changeActivity(data: Book){
+    private fun changeActivity(data: Book) {
         startActivity(Intent(this, BookInfo::class.java).apply {
             putExtra("recordId", data.recordId)
             putExtra("title", data.title)
@@ -83,7 +92,6 @@ class MainActivity : ComponentActivity() {
     fun MainCompose(modifier: Modifier = Modifier) {
         var searchQuery by remember { mutableStateOf("") }
         var isActive by remember { mutableStateOf(false) }
-//        var result by remember { mutableStateListOf<Element>() }
         val result: MutableState<MutableList<Book>> =
             remember { mutableStateOf(mutableStateListOf<Book>()) }
         Row(
@@ -94,11 +102,11 @@ class MainActivity : ComponentActivity() {
                 query = searchQuery,
                 onQueryChange = {
                     searchQuery = it
-//                    CoroutineScope(Dispatchers.IO).launch {
-//                        result.value = WebsiteFetcher.searchBooks(
-//                            searchQuery
-//                        ).toMutableList()
-//                    }
+                    CoroutineScope(Dispatchers.IO).launch {
+                        result.value = db.bookDao().search(
+                            searchQuery
+                        ).toMutableList()
+                    }
                 },
                 onSearch = {},
                 active = isActive,
