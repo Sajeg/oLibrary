@@ -1,12 +1,16 @@
 package com.sajeg.olibrary
 
+import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.RequiresApi
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -15,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -23,6 +28,7 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SearchBar
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
@@ -55,14 +61,13 @@ class MainActivity : ComponentActivity() {
             this,
             AppDatabase::class.java, "library"
         ).build()
-//        Uncomment to start the download and import
-        WebsiteFetcher.startDBDownload(this)
 
         enableEdgeToEdge()
         setContent {
             OLibraryTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     MainCompose(Modifier.padding(innerPadding))
+                    DownloadDialog(this)
                 }
             }
         }
@@ -85,6 +90,66 @@ class MainActivity : ComponentActivity() {
             putExtra("imageLink", data.imgUrl)
             putExtra("url", data.url)
         })
+    }
+
+    @Composable
+    fun DownloadDialog(context: Context) {
+        var requiresUpdate by remember { mutableStateOf(false) }
+        var silentUpdate by remember { mutableStateOf(false) }
+        val updateLater by remember { mutableStateOf(false) }
+//        val firstDownload = db.bookDao().getRowCount() == 0
+        val firstDownload = true
+
+        if (!firstDownload) {
+            // Check if update is online
+            if (!updateLater) {
+                Log.d("DownloadDialog", "Database has ${db.bookDao().getRowCount()} entries")
+                requiresUpdate = true
+            }
+        } else {
+            requiresUpdate = true
+        }
+        AnimatedVisibility(requiresUpdate) {
+            AlertDialog(
+                onDismissRequest = {
+                    if (firstDownload) {
+                        val activity = (context as? Activity)
+                        activity?.finish()
+                    }
+                },
+                confirmButton = {
+                    if (!firstDownload) {
+                        TextButton(
+                            onClick = { },
+                            content = {
+                                Text(text = "Later")
+                            }
+                        )
+                    }
+                    TextButton(
+                        onClick = { silentUpdate = true; DatabaseBookManager.startDBDownload(context) },
+                        content = {
+                            Text(text = "Start Download")
+                        }
+                    )
+                },
+                title = {
+                    if (firstDownload) {
+                        Text(text = "Download Books")
+                    } else {
+                        Text(text = "Update available")
+                    }
+                },
+                text = {
+                    if (firstDownload) {
+                        Text(text = "In order to use this App it requires an Download of about 120mb")
+                    } else {
+                        Text(text = "Update the book catalog now to have the newest titles. " +
+                                "You can use the App while it updates the catalog.")
+                    }
+                }
+            )
+        }
     }
 
     @OptIn(ExperimentalMaterial3Api::class, ExperimentalGlideComposeApi::class)

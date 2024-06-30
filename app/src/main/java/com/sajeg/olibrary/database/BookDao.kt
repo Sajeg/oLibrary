@@ -9,6 +9,8 @@ import com.sajeg.olibrary.Book
 
 @Dao
 interface BookDao {
+    @Query("SELECT COUNT(*) FROM books")
+    fun getRowCount(): Int
 
     @Query("SELECT * FROM books WHERE books MATCH :query")
     fun search(query: String): List<Book>

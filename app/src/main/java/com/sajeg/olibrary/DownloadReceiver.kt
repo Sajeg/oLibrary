@@ -23,7 +23,7 @@ class DownloadReceiver : BroadcastReceiver() {
                     if (uri != null) {
                         Log.d("DownloadReceiver", "File URI: $uri")
                         CoroutineScope(Dispatchers.IO).launch {
-                            WebsiteFetcher.importBooks(context, uri)
+                            DatabaseBookManager.importBooks(context, uri)
                         }
                     } else {
                         Log.e("DownloadReceiver", "URI is null for download ID: $downloadId")
