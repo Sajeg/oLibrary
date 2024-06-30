@@ -1,10 +1,12 @@
 package com.sajeg.olibrary
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.util.JsonReader
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -43,6 +45,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.room.Room
@@ -55,6 +58,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.InputStreamReader
 import java.net.URL
 
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
@@ -110,7 +115,6 @@ class MainActivity : ComponentActivity() {
         }.collectAsState(initial = "")
         var firstDownload = version == ""
 
-        Log.d("Read", version)
         if (!firstDownload) {
             // Check if update is available
 
@@ -178,32 +182,60 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    @SuppressLint("MutableCollectionMutableState")
     @OptIn(ExperimentalMaterial3Api::class, ExperimentalGlideComposeApi::class)
     @Composable
     fun MainCompose(modifier: Modifier = Modifier) {
         var searchQuery by remember { mutableStateOf("") }
         var isActive by remember { mutableStateOf(false) }
+        var updated by remember { mutableStateOf(false) }
         var newestVersion by remember { mutableStateOf("") }
         val result: MutableState<MutableList<Book>> =
-            remember { mutableStateOf(mutableStateListOf<Book>()) }
+            remember { mutableStateOf(mutableStateListOf()) }
         val installedVersion by this.dataStore.data.map {
             it[stringPreferencesKey("last_update")] ?: ""
         }.collectAsState(initial = "")
-
-        if (newestVersion == "") {
+        Log.d("InstalledVersion", installedVersion)
+        if (installedVersion == "") {
+            DownloadDialog(this)
+            LaunchedEffect(updated) {
+                withContext(Dispatchers.IO) {
+                    this@MainActivity.dataStore.edit { settings ->
+                        settings[stringPreferencesKey("last_update")] = newestVersion
+                        updated = true
+                    }
+                }
+            }
+        } else if (newestVersion == "") {
             LaunchedEffect(key1 = newestVersion) {
                 val websiteUrl =
                     URL("https://raw.githubusercontent.com/Sajeg/olibrary-db-updater/master/info.json")
-                val content = websiteUrl.readText()
-                Log.d("Website", content)
-                newestVersion = "XXXXXXX"
+                val inputStream = withContext(Dispatchers.IO) {
+                    websiteUrl.openStream()
+                }
+                JsonReader(InputStreamReader(inputStream)).use { reader ->
+                    reader.beginObject()
+                    if (reader.hasNext()) {
+                        if (reader.nextName() == "last_update") {
+                            newestVersion = reader.nextString()
+                            Log.d("NewestVersion", newestVersion)
+                        }
+                    }
+                }
+            }
+        } else if (newestVersion != installedVersion) {
+            DownloadDialog(this)
+            LaunchedEffect(updated) {
+                withContext(Dispatchers.IO) {
+                    this@MainActivity.dataStore.edit { settings ->
+                        settings[stringPreferencesKey("last_update")] = newestVersion
+                        updated = true
+                    }
+                }
             }
         }
-
-        DownloadDialog(this)
-
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Center
         ) {
             SearchBar(
@@ -219,7 +251,7 @@ class MainActivity : ComponentActivity() {
                 onSearch = {},
                 active = isActive,
                 onActiveChange = { isActive = it },
-                placeholder = { Text(text = "Suche nach einem Buch") },
+                placeholder = { Text(text = "Search for a book") },
                 leadingIcon = {
                     IconButton(onClick = { isActive = !isActive }) {
                         Icon(
@@ -249,7 +281,7 @@ class MainActivity : ComponentActivity() {
                                         },
                                         supportingContent = {
                                             Text(
-                                                text = "Von ${book.author} aus dem Jahr ${book.year} " +
+                                                text = "Von ${book.author} aus dem year ${book.year} " +
                                                         "auf ${book.language} als ${book.genre}"
                                             )
                                         }

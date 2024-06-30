@@ -6,7 +6,6 @@ import android.database.sqlite.SQLiteConstraintException
 import android.net.Uri
 import android.util.JsonReader
 import android.util.Log
-import android.widget.Toast
 import androidx.room.Room
 import com.sajeg.olibrary.database.AppDatabase
 import com.sajeg.olibrary.database.BookDBItem
@@ -44,7 +43,6 @@ object DatabaseBookManager {
         Log.d("Import", "Starting Import")
         context.contentResolver.openInputStream(fileUri)?.use { inputStream ->
             JsonReader(InputStreamReader(inputStream, "UTF-8")).use { reader ->
-
                 reader.beginArray()
                 while (reader.hasNext()) {
                     reader.beginObject()
@@ -113,14 +111,8 @@ object DatabaseBookManager {
                     }
                 }
                 reader.endArray()
-
-
                 reader.close()
                 Log.d("Import", "Completed.")
-//                context.dataStore.edit { settings ->
-//                    settings[stringPreferencesKey("last_update")] = lastUpdate
-//                }
-                Toast.makeText(context, "Loaded all Books", Toast.LENGTH_SHORT).show()
             }
         }
     }
