@@ -6,6 +6,7 @@ import android.database.sqlite.SQLiteConstraintException
 import android.net.Uri
 import android.util.JsonReader
 import android.util.Log
+import android.widget.Toast
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.room.Room
@@ -18,7 +19,7 @@ import java.io.InputStreamReader
 object DatabaseBookManager {
     private lateinit var db: AppDatabase
 
-    fun startDBDownload(context: Context) {
+    fun startDBDownload(context: Context, background: Boolean = false) {
         Log.d("DownloadManager", "Started Download")
         val request =
             DownloadManager.Request(Uri.parse("https://github.com/Sajeg/olibrary-db-updater/raw/master/data.json"))
@@ -26,6 +27,10 @@ object DatabaseBookManager {
         request.setDescription("This is to make sure you have the newest books")
         request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE)
         request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI)
+        if (background) {
+            request.setRequiresDeviceIdle(true)
+            request.setRequiresCharging(true)
+        }
 
         val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
         downloadManager.enqueue(request)
@@ -96,7 +101,6 @@ object DatabaseBookManager {
                                             url
                                         )
                                     )
-                                    Log.d("Import", recordId.toString())
                                 } catch (e: Exception) {
                                     if (e == SQLiteConstraintException()) {
                                         bookDao.updateBook(
@@ -113,7 +117,6 @@ object DatabaseBookManager {
                                             )
                                         )
                                     }
-                                    Log.d("Update", recordId.toString())
                                 }
                             }
                             reader.endArray()
@@ -129,6 +132,7 @@ object DatabaseBookManager {
                 context.dataStore.edit { settings ->
                     settings[stringPreferencesKey("last_update")] = lastUpdate
                 }
+                Toast.makeText(context, "Loaded all Books", Toast.LENGTH_SHORT).show()
             }
         }
     }
