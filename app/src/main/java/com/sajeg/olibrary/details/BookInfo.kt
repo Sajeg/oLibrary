@@ -1,4 +1,4 @@
-package com.sajeg.olibrary
+package com.sajeg.olibrary.details
 
 import android.content.Intent
 import android.graphics.Bitmap
@@ -41,6 +41,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.bumptech.glide.Glide
+import com.sajeg.olibrary.MainActivity
+import com.sajeg.olibrary.R
 import com.sajeg.olibrary.ui.theme.OLibraryTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

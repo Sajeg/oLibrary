@@ -14,7 +14,7 @@
         android:theme="@style/Theme.OLibrary"
         tools:targetApi="31">
         <activity
-            android:name=".BookInfo"
+            android:name=".details.BookInfo"
             android:exported="false"
             android:label="@string/title_activity_book_info"
             android:theme="@style/Theme.OLibrary" />

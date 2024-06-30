@@ -1,6 +1,7 @@
-package com.sajeg.olibrary
+package com.sajeg.olibrary.details
 
 import android.util.Log
+import com.sajeg.olibrary.Book
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import java.net.HttpURLConnection

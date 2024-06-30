@@ -6,6 +6,8 @@ import android.database.sqlite.SQLiteConstraintException
 import android.net.Uri
 import android.util.JsonReader
 import android.util.Log
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.room.Room
 import com.sajeg.olibrary.database.AppDatabase
 import com.sajeg.olibrary.database.BookDBItem
@@ -124,6 +126,9 @@ object DatabaseBookManager {
                 reader.endObject()
                 reader.close()
                 Log.d("Import", "Completed. Last update: $lastUpdate")
+                context.dataStore.edit { settings ->
+                    settings[stringPreferencesKey("last_update")] = lastUpdate
+                }
             }
         }
     }
