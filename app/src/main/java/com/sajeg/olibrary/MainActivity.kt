@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -95,19 +94,19 @@ class MainActivity : ComponentActivity() {
     @Composable
     fun DownloadDialog(context: Context) {
         var requiresUpdate by remember { mutableStateOf(false) }
-        var silentUpdate by remember { mutableStateOf(false) }
-        val updateLater by remember { mutableStateOf(false) }
+        var alreadyRan by remember { mutableStateOf(false) }
 //        val firstDownload = db.bookDao().getRowCount() == 0
-        val firstDownload = true
+        var firstDownload = false
 
         if (!firstDownload) {
             // Check if update is online
-            if (!updateLater) {
-                Log.d("DownloadDialog", "Database has ${db.bookDao().getRowCount()} entries")
+            if (!alreadyRan) {
                 requiresUpdate = true
             }
         } else {
-            requiresUpdate = true
+            if (!alreadyRan) {
+                requiresUpdate = true
+            }
         }
         AnimatedVisibility(requiresUpdate) {
             AlertDialog(
@@ -120,14 +119,22 @@ class MainActivity : ComponentActivity() {
                 confirmButton = {
                     if (!firstDownload) {
                         TextButton(
-                            onClick = { },
+                            onClick = {
+                                requiresUpdate = false
+                                alreadyRan = true
+                            },
                             content = {
                                 Text(text = "Later")
                             }
                         )
                     }
                     TextButton(
-                        onClick = { silentUpdate = true; DatabaseBookManager.startDBDownload(context) },
+                        onClick = {
+                            DatabaseBookManager.startDBDownload(context)
+                            requiresUpdate = false
+                            firstDownload = false
+                            alreadyRan = true
+                        },
                         content = {
                             Text(text = "Start Download")
                         }
@@ -142,10 +149,13 @@ class MainActivity : ComponentActivity() {
                 },
                 text = {
                     if (firstDownload) {
-                        Text(text = "In order to use this App it requires an Download of about 120mb")
+                        Text(text = "In order to use this App it requires an Download of about 120mb. " +
+                                "You can use the App while it downloads the catalog.")
                     } else {
-                        Text(text = "Update the book catalog now to have the newest titles. " +
-                                "You can use the App while it updates the catalog.")
+                        Text(
+                            text = "Update the book catalog now to have the newest titles. " +
+                                    "You can use the App while it updates the catalog."
+                        )
                     }
                 }
             )
