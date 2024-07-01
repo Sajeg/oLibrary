@@ -24,6 +24,10 @@ class DownloadReceiver : BroadcastReceiver() {
                         Log.d("DownloadReceiver", "File URI: $uri")
                         CoroutineScope(Dispatchers.IO).launch {
                             DatabaseBookManager.importBooks(context, uri)
+                            DatabaseBookManager.setInstalledVersion(
+                                context,
+                                DatabaseBookManager.newestVersion(context)
+                            )
                         }
                     } else {
                         Log.e("DownloadReceiver", "URI is null for download ID: $downloadId")

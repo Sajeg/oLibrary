@@ -108,7 +108,7 @@ class MainActivity : ComponentActivity() {
 
         LaunchedEffect(key1 = Unit) {
             CoroutineScope(Dispatchers.IO).launch {
-                installedVersion = DatabaseBookManager.updater(this@MainActivity)
+                installedVersion = DatabaseBookManager.installedVersion(this@MainActivity)
             }.join()
 
             CoroutineScope(Dispatchers.IO).launch {
@@ -123,9 +123,6 @@ class MainActivity : ComponentActivity() {
         if (needsUpdate) {
             DownloadDialog(context = this@MainActivity, installedVersion, onInput = {
                 needsUpdate = false
-                CoroutineScope(Dispatchers.IO).launch {
-                    DatabaseBookManager.setInstalledVersion(this@MainActivity, installedVersion)
-                }
             })
         }
     }

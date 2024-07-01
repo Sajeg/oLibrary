@@ -7,16 +7,11 @@ import android.app.job.JobService
 import android.content.ComponentName
 import android.os.Handler
 import android.os.Looper
-import android.widget.Toast
 
 class UpdateDbBackground : JobService() {
     private val mHandler = Handler(Looper.getMainLooper())
     override fun onStartJob(params: JobParameters?): Boolean {
         DatabaseBookManager.startDBDownload(applicationContext, true)
-
-        mHandler.post {
-            Toast.makeText(applicationContext, "Job ran", Toast.LENGTH_SHORT).show()
-        }
 
         return true
     }
