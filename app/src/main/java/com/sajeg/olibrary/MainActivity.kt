@@ -21,11 +21,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SearchBar
@@ -33,10 +33,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -54,10 +52,8 @@ import com.bumptech.glide.integration.compose.GlideImage
 import com.sajeg.olibrary.database.AppDatabase
 import com.sajeg.olibrary.details.BookInfo
 import com.sajeg.olibrary.ui.theme.OLibraryTheme
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.InputStreamReader
 import java.net.URL
@@ -81,7 +77,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             OLibraryTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    MainCompose(Modifier.padding(innerPadding))
+                    MainCompose(Modifier.padding(innerPadding), BookSearchViewModel(db.bookDao()))
                 }
             }
         }
@@ -185,13 +181,14 @@ class MainActivity : ComponentActivity() {
     @SuppressLint("MutableCollectionMutableState")
     @OptIn(ExperimentalMaterial3Api::class, ExperimentalGlideComposeApi::class)
     @Composable
-    fun MainCompose(modifier: Modifier = Modifier) {
-        var searchQuery by remember { mutableStateOf("") }
+    fun MainCompose(modifier: Modifier = Modifier, viewModel: BookSearchViewModel) {
+        val searchQuery by viewModel.searchQuery.collectAsState()
+        val searchResults by viewModel.searchResults.collectAsState()
+        var searchText by remember { mutableStateOf("") }
         var isActive by remember { mutableStateOf(false) }
         var updated by remember { mutableStateOf(false) }
         var newestVersion by remember { mutableStateOf("") }
-        val result: MutableState<MutableList<Book>> =
-            remember { mutableStateOf(mutableStateListOf()) }
+
         val installedVersion by this.dataStore.data.map {
             it[stringPreferencesKey("last_update")] ?: ""
         }.collectAsState(initial = "")
@@ -235,18 +232,13 @@ class MainActivity : ComponentActivity() {
             }
         }
         Row(
-            modifier = modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Center
         ) {
             SearchBar(
                 query = searchQuery,
                 onQueryChange = {
-                    searchQuery = it
-                    CoroutineScope(Dispatchers.IO).launch {
-                        result.value = db.bookDao().search(
-                            searchQuery
-                        ).toMutableList()
-                    }
+                    viewModel.setSearchQuery(it)
                 },
                 onSearch = {},
                 active = isActive,
@@ -262,37 +254,28 @@ class MainActivity : ComponentActivity() {
                 },
                 trailingIcon = {},
                 content = {
-                    if (result.value.isNotEmpty()) {
-
-                        LazyColumn {
-                            for (book in result.value) {
-                                item {
-                                    ListItem(
-                                        modifier = Modifier.clickable {
-                                            changeActivity(book)
-                                        },
-                                        headlineContent = { Text(text = book.title) },
-                                        leadingContent = {
-                                            GlideImage(
-                                                model = book.imgUrl,
-                                                contentDescription = "The Book Cover",
-                                                modifier = Modifier.size(60.dp)
-                                            )
-                                        },
-                                        supportingContent = {
-                                            Text(
-                                                text = "${book.getAuthorFormated()} aus dem year ${book.year} " +
-                                                        "auf ${book.language} in der Reihe ${book.series} " +
-                                                        "als ${book.genre}"
-                                            )
-                                        }
+                    LazyColumn {
+                        items(searchResults) { book ->
+                            ListItem(
+                                modifier = Modifier.clickable {
+                                    changeActivity(book)
+                                },
+                                headlineContent = { Text(text = book.title) },
+                                leadingContent = {
+                                    GlideImage(
+                                        model = book.imgUrl,
+                                        contentDescription = "The Book Cover",
+                                        modifier = Modifier.size(60.dp)
+                                    )
+                                },
+                                supportingContent = {
+                                    Text(
+                                        text = "${book.getAuthorFormated()} aus dem year ${book.year} " +
+                                                "auf ${book.language} in der Reihe ${book.series} " +
+                                                "als ${book.genre}"
                                     )
                                 }
-                            }
-                        }
-                    } else {
-                        Row(Modifier.fillMaxWidth()) {
-                            LinearProgressIndicator(Modifier.fillMaxWidth())
+                            )
                         }
                     }
                 }
