@@ -29,8 +29,7 @@ object BookData {
             bookDetailsDoc = Jsoup.parse(inputStream.bufferedReader().use { it.readText() })
             desc = bookDetailsDoc.select("div.arena-detail-description div.arena-value span")
                 .lastOrNull()!!.text()
-            isbn = bookDetailsDoc.select("div.arena-detail-isbn div.arena-value span")
-                .lastOrNull()!!.text()
+            Log.d("ISBN", bookDetailsDoc.text())
         } catch (e: Exception) {
             Log.e("WebsiteFetcher", "Error fetching content: $e")
         }
