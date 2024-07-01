@@ -281,8 +281,9 @@ class MainActivity : ComponentActivity() {
                                         },
                                         supportingContent = {
                                             Text(
-                                                text = "Von ${book.author} aus dem year ${book.year} " +
-                                                        "auf ${book.language} als ${book.genre}"
+                                                text = "${book.getAuthorFormated()} aus dem year ${book.year} " +
+                                                        "auf ${book.language} in der Reihe ${book.series} " +
+                                                        "als ${book.genre}"
                                             )
                                         }
                                     )
