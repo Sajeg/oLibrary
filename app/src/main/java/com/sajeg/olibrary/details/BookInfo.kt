@@ -6,6 +6,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -25,15 +26,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
-import androidx.compose.ui.graphics.painter.BitmapPainter
-import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -103,33 +100,6 @@ class BookInfo : ComponentActivity() {
     }
 }
 
-class GradientImagePainter(
-    private val imagePainter: Painter
-) : Painter() {
-
-    override val intrinsicSize: androidx.compose.ui.geometry.Size
-        get() = imagePainter.intrinsicSize
-
-    override fun DrawScope.onDraw() {
-        drawIntoCanvas { canvas ->
-            with(imagePainter) {
-                draw(Size(width.value, height.value), alpha = 1.0f)
-            }
-
-            drawRect(
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        Color.Transparent,
-                        background
-                    ),
-                    endY = width.value
-                ),
-                size = Size(width.value, height.value)
-            )
-        }
-    }
-}
-
 @Composable
 fun DisplayBookCover(modifier: Modifier) {
     val configuration = LocalConfiguration.current
@@ -149,16 +119,26 @@ fun DisplayBookCover(modifier: Modifier) {
     Column(
         modifier = modifier
             .fillMaxSize()
-            .drawBehind {
-                if (bitmap.value != null) {
-                    drawIntoCanvas {
-                        with(GradientImagePainter(BitmapPainter(bitmap.value!!.asImageBitmap()))) {
-                            draw(Size(width.value, height.value))
-                        }
-                    }
-                }
-            }
     ) {
+        if (bitmap.value != null) {
+            Image(
+                bitmap = bitmap.value!!.asImageBitmap(),
+                contentDescription = "Cover",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.drawWithContent {
+                    drawContent()
+                    drawRect(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(Color.Transparent, background),
+                            startY = size.height / 2,
+                            endY = size.height
+                        )
+//                                blendMode = BlendMode.Multiply
+                    )
+                }
+            )
+
+        }
 //        if (bitmap.value != null) {
 //            Row(
 //                horizontalArrangement = Arrangement.Center
@@ -185,8 +165,11 @@ fun DisplayBookInfo(modifier: Modifier) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(text = BookData.getCurrentBook().title, style = MaterialTheme.typography.displayLarge)
-        Text(text = "Von ${BookData.getCurrentBook().author}", style = MaterialTheme.typography.titleMedium)
-        Row (horizontalArrangement = Arrangement.Start){
+        Text(
+            text = "Von ${BookData.getCurrentBook().author}",
+            style = MaterialTheme.typography.titleMedium
+        )
+        Row(horizontalArrangement = Arrangement.Start) {
             Text(text = "Bla Bla Description", fontSize = 20.sp)
             Text(text = "Bla Bla Data", fontSize = 20.sp)
         }
