@@ -59,7 +59,7 @@ object DatabaseBookManager {
             DownloadManager.Request(Uri.parse("https://github.com/Sajeg/olibrary-db-updater/raw/master/data.json"))
         request.setTitle("Updating the Database")
         request.setDescription("This is to make sure you have the newest books")
-        request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE)
+        request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
         request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_WIFI)
         if (background) {
             request.setRequiresDeviceIdle(true)

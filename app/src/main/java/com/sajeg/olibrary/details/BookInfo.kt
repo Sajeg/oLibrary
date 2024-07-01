@@ -2,6 +2,7 @@ package com.sajeg.olibrary.details
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -11,7 +12,6 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowColumn
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -28,11 +28,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import com.bumptech.glide.Glide
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.sajeg.olibrary.MainActivity
@@ -132,9 +133,21 @@ class BookInfo : ComponentActivity() {
 @Composable
 fun DisplayBookInfo(modifier: Modifier) {
     val imageHeight = remember { mutableIntStateOf(0) }
+    val currentBook = BookData.getCurrentBook()
+    val glideImage =
+        Glide.with(LocalContext.current).asBitmap().load(BookData.getCurrentBook().imgUrl)
+    LaunchedEffect(key1 = BookData.getCurrentBook().imgUrl) {
+        withContext(Dispatchers.IO) {
+            val futureTarget = glideImage.submit()
+            Log.d("ImageFutur", futureTarget.get().height.toString())
+            imageHeight.intValue = futureTarget.get().height
+            futureTarget.cancel(false)
+        }
+    }
+    Log.d("ImageHeight", imageHeight.toString())
     Column {
         GlideImage(
-            model = BookData.getCurrentBook().imgUrl,
+            model = currentBook.imgUrl,
             contentDescription = "Das Cover",
             modifier = Modifier
                 .fillMaxSize()
@@ -149,40 +162,54 @@ fun DisplayBookInfo(modifier: Modifier) {
     ) {
         Row {
             GlideImage(
-                model = BookData.getCurrentBook().imgUrl,
+                model = currentBook.imgUrl,
                 contentDescription = "Das Cover",
-                modifier = Modifier.onSizeChanged {
-                    imageHeight.intValue = it.height
-                }
             )
             FlowColumn(
                 verticalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.padding(start = 20.dp).height(228.dp)
+                modifier = Modifier
+                    .padding(start = 20.dp)
+                    //.height(228.dp)
             ) {
-                Text(text = "Autor*in: ${BookData.getCurrentBook().getAuthorFormated(true)}", color = MaterialTheme.colorScheme.onBackground)
-                if (BookData.getCurrentBook().year != "") {
+                if (currentBook.year.isNotBlank()) {
                     Text(
-                        text = "Jahr: ${BookData.getCurrentBook().year}",
+                        text = "Autor*in: ${currentBook.getAuthorFormated(true)}",
                         color = MaterialTheme.colorScheme.onBackground
                     )
                 }
-                if (BookData.getCurrentBook().language != "") {
+                if (currentBook.year.isNotBlank()) {
                     Text(
-                        text = "Sprache: ${BookData.getCurrentBook().language}",
+                        text = "Jahr: ${currentBook.year}",
                         color = MaterialTheme.colorScheme.onBackground
                     )
                 }
-                if (BookData.getCurrentBook().series != "") {
+                if (currentBook.language.isNotBlank()) {
                     Text(
-                        text = "Reihe: ${BookData.getCurrentBook().series}",
+                        text = "Sprache: ${currentBook.language}",
                         color = MaterialTheme.colorScheme.onBackground
                     )
                 }
-                Text(text = "Genre: ${BookData.getCurrentBook().genre}", color = MaterialTheme.colorScheme.onBackground)
-                Text(text = "ISBN: ${BookData.isbn}", color = MaterialTheme.colorScheme.onBackground)
+                if (currentBook.series!!.isNotBlank()) {
+                    Text(
+                        text = "Reihe: ${currentBook.series}",
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                }
+                if (currentBook.genre.isNotBlank()) {
+                    Text(
+                        text = "Genre: ${currentBook.genre}",
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                }
+                if (BookData.isbn.isNotBlank()) {
+                    Text(
+                        text = "ISBN: ${BookData.isbn}",
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                }
             }
         }
-        Column (
+        Column(
             modifier = Modifier.padding(top = 20.dp)
         ) {
             Text(text = BookData.desc)

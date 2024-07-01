@@ -26,7 +26,7 @@ class UpdateDbBackground : JobService() {
         val jobScheduler = getSystemService(JOB_SCHEDULER_SERVICE) as JobScheduler
         val jobInfo = JobInfo.Builder(1, ComponentName(this, UpdateDbBackground::class.java))
             .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY) // Example network constraint
-            .setPeriodic(2 * 24 * 60 * 60 * 1000) // 2 days in milliseconds
+            .setPeriodic(30 * 60 * 1000) // 2 days in milliseconds, Every 30 minutes for debug purpose
             .build()
 
         jobScheduler.schedule(jobInfo)
