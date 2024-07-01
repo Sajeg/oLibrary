@@ -12,28 +12,10 @@ interface BookDao {
     @Query("SELECT COUNT(*) FROM books")
     fun getRowCount(): Int
 
-    @Query("""
-        SELECT *, 
-        CASE 
-            WHEN title LIKE :query THEN 50
-            WHEN author LIKE :query THEN 40
-            WHEN series LIKE :query THEN 30
-            WHEN title LIKE :query || '%' THEN 25
-            WHEN author LIKE :query || '%' THEN 20
-            WHEN series LIKE :query || '%' THEN 15
-            WHEN genre LIKE :query THEN 10
-            WHEN language LIKE :query THEN 5
-            ELSE 1
-        END as relevance,
-        LENGTH(title) as titleLength
+    @Query(""" SELECT *
         FROM books
-        WHERE title LIKE '%' || REPLACE(:query, ' ', '%') || '%'
-           OR author LIKE '%' || REPLACE(:query, ' ', '%') || '%'
-           OR language LIKE '%' || REPLACE(:query, ' ', '%') || '%'
-           OR genre LIKE '%' || REPLACE(:query, ' ', '%') || '%'
-           OR series LIKE '%' || REPLACE(:query, ' ', '%') || '%'
-        ORDER BY relevance DESC, titleLength ASC, title ASC
-    """)
+        WHERE books MATCH '*' || :query || '*'
+        LIMIT 30""")
     fun search(query: String): List<Book>
 
     @Query("SELECT * FROM books WHERE rowid LIKE :id")
