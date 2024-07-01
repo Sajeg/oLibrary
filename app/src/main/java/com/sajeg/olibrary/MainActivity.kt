@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.net.ConnectivityManager
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -71,7 +72,10 @@ class MainActivity : ComponentActivity() {
             OLibraryTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     MainCompose(Modifier.padding(innerPadding), BookSearchViewModel(db.bookDao()))
-                    CheckForUpdates()
+                    val connectivityManager = getSystemService(ConnectivityManager::class.java)
+                    if (!connectivityManager.isActiveNetworkMetered) {
+                        CheckForUpdates()
+                    }
                 }
             }
         }
