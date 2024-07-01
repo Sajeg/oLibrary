@@ -6,13 +6,10 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-import android.util.JsonReader
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.RequiresApi
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -43,8 +40,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.room.Room
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
@@ -52,11 +47,9 @@ import com.bumptech.glide.integration.compose.GlideImage
 import com.sajeg.olibrary.database.AppDatabase
 import com.sajeg.olibrary.details.BookInfo
 import com.sajeg.olibrary.ui.theme.OLibraryTheme
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.withContext
-import java.io.InputStreamReader
-import java.net.URL
+import kotlinx.coroutines.launch
 
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 
@@ -78,6 +71,7 @@ class MainActivity : ComponentActivity() {
             OLibraryTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     MainCompose(Modifier.padding(innerPadding), BookSearchViewModel(db.bookDao()))
+                    CheckForUpdates()
                 }
             }
         }
@@ -103,79 +97,89 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    fun DownloadDialog(context: Context) {
-        var requiresUpdate by remember { mutableStateOf(false) }
-        var alreadyRan by remember { mutableStateOf(false) }
-        val version by context.dataStore.data.map {
-            it[stringPreferencesKey("last_update")] ?: ""
-        }.collectAsState(initial = "")
-        var firstDownload = version == ""
+    fun CheckForUpdates() {
+        var needsUpdate by remember { mutableStateOf(false) }
+        var installedVersion by remember { mutableStateOf("") }
+        var newestVersion by remember { mutableStateOf("") }
 
-        if (!firstDownload) {
-            // Check if update is available
+        LaunchedEffect(key1 = Unit) {
+            CoroutineScope(Dispatchers.IO).launch {
+                installedVersion = DatabaseBookManager.updater(this@MainActivity)
+            }.join()
 
-            if (!alreadyRan) {
-                requiresUpdate = true
-            }
-        } else {
-            if (!alreadyRan) {
-                requiresUpdate = true
+            CoroutineScope(Dispatchers.IO).launch {
+                newestVersion = DatabaseBookManager.newestVersion(this@MainActivity)
+            }.join()
+
+            if (newestVersion != installedVersion) {
+                //Open Download Dialog
+                needsUpdate = true
             }
         }
-        AnimatedVisibility(requiresUpdate) {
-            AlertDialog(
-                onDismissRequest = {
-                    if (firstDownload) {
-                        val activity = (context as? Activity)
-                        activity?.finish()
-                    }
-                },
-                confirmButton = {
-                    if (!firstDownload) {
-                        TextButton(
-                            onClick = {
-                                requiresUpdate = false
-                                alreadyRan = true
-                            },
-                            content = {
-                                Text(text = "Later")
-                            }
-                        )
-                    }
+        if (needsUpdate) {
+            DownloadDialog(context = this@MainActivity, installedVersion, onInput = {
+                needsUpdate = false
+                CoroutineScope(Dispatchers.IO).launch {
+                    DatabaseBookManager.setInstalledVersion(this@MainActivity, installedVersion)
+                }
+            })
+        }
+    }
+
+    @Composable
+    fun DownloadDialog(context: Context, installedVersion: String, onInput: () -> Unit) {
+        var firstDownload = installedVersion == ""
+
+        AlertDialog(
+            onDismissRequest = {
+                if (firstDownload) {
+                    val activity = (context as? Activity)
+                    activity?.finish()
+                }
+            },
+            confirmButton = {
+                if (!firstDownload) {
                     TextButton(
                         onClick = {
-                            DatabaseBookManager.startDBDownload(context)
-                            requiresUpdate = false
-                            firstDownload = false
-                            alreadyRan = true
+                            onInput()
                         },
                         content = {
-                            Text(text = "Start Download")
+                            Text(text = "Later")
                         }
                     )
-                },
-                title = {
-                    if (firstDownload) {
-                        Text(text = "Download Books")
-                    } else {
-                        Text(text = "Update available")
-                    }
-                },
-                text = {
-                    if (firstDownload) {
-                        Text(
-                            text = "In order to use this App it requires an Download of about 120mb. " +
-                                    "You can use the App while it downloads the catalog."
-                        )
-                    } else {
-                        Text(
-                            text = "Update the book catalog now to have the newest titles. " +
-                                    "You can use the App while it updates the catalog."
-                        )
-                    }
                 }
-            )
-        }
+                TextButton(
+                    onClick = {
+                        DatabaseBookManager.startDBDownload(context)
+                        firstDownload = false
+                        onInput()
+                    },
+                    content = {
+                        Text(text = "Start Download")
+                    }
+                )
+            },
+            title = {
+                if (firstDownload) {
+                    Text(text = "Download Books")
+                } else {
+                    Text(text = "Update available")
+                }
+            },
+            text = {
+                if (firstDownload) {
+                    Text(
+                        text = "In order to use this App it requires an Download of about 120mb. " +
+                                "You can use the App while it downloads the catalog."
+                    )
+                } else {
+                    Text(
+                        text = "Update the book catalog now to have the newest titles. " +
+                                "You can use the App while it updates the catalog."
+                    )
+                }
+            }
+        )
     }
 
     @SuppressLint("MutableCollectionMutableState")
@@ -184,53 +188,7 @@ class MainActivity : ComponentActivity() {
     fun MainCompose(modifier: Modifier = Modifier, viewModel: BookSearchViewModel) {
         val searchQuery by viewModel.searchQuery.collectAsState()
         val searchResults by viewModel.searchResults.collectAsState()
-        var searchText by remember { mutableStateOf("") }
         var isActive by remember { mutableStateOf(false) }
-        var updated by remember { mutableStateOf(false) }
-        var newestVersion by remember { mutableStateOf("") }
-
-        val installedVersion by this.dataStore.data.map {
-            it[stringPreferencesKey("last_update")] ?: ""
-        }.collectAsState(initial = "")
-        Log.d("InstalledVersion", installedVersion)
-        if (installedVersion == "") {
-            DownloadDialog(this)
-            LaunchedEffect(updated) {
-                withContext(Dispatchers.IO) {
-                    this@MainActivity.dataStore.edit { settings ->
-                        settings[stringPreferencesKey("last_update")] = newestVersion
-                        updated = true
-                    }
-                }
-            }
-        } else if (newestVersion == "") {
-            LaunchedEffect(key1 = newestVersion) {
-                val websiteUrl =
-                    URL("https://raw.githubusercontent.com/Sajeg/olibrary-db-updater/master/info.json")
-                val inputStream = withContext(Dispatchers.IO) {
-                    websiteUrl.openStream()
-                }
-                JsonReader(InputStreamReader(inputStream)).use { reader ->
-                    reader.beginObject()
-                    if (reader.hasNext()) {
-                        if (reader.nextName() == "last_update") {
-                            newestVersion = reader.nextString()
-                            Log.d("NewestVersion", newestVersion)
-                        }
-                    }
-                }
-            }
-        } else if (newestVersion != installedVersion) {
-            DownloadDialog(this)
-            LaunchedEffect(updated) {
-                withContext(Dispatchers.IO) {
-                    this@MainActivity.dataStore.edit { settings ->
-                        settings[stringPreferencesKey("last_update")] = newestVersion
-                        updated = true
-                    }
-                }
-            }
-        }
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Center

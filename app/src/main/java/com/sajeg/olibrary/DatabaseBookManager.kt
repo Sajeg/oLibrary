@@ -6,15 +6,87 @@ import android.database.sqlite.SQLiteConstraintException
 import android.net.Uri
 import android.util.JsonReader
 import android.util.Log
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.room.Room
 import com.sajeg.olibrary.database.AppDatabase
 import com.sajeg.olibrary.database.BookDBItem
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import java.io.InputStreamReader
+import java.net.URL
 
 object DatabaseBookManager {
     private lateinit var db: AppDatabase
+
+    suspend fun setInstalledVersion(context: Context, version: String) {
+        context.dataStore.edit { settings ->
+            settings[stringPreferencesKey("last_update")] = version
+        }
+    }
+
+    suspend fun newestVersion(context: Context): String {
+        var newestVersion = ""
+        val websiteUrl =
+            URL("https://raw.githubusercontent.com/Sajeg/olibrary-db-updater/master/info.json")
+        val inputStream = withContext(Dispatchers.IO) {
+            websiteUrl.openStream()
+        }
+        JsonReader(InputStreamReader(inputStream)).use { reader ->
+            reader.beginObject()
+            if (reader.hasNext()) {
+                if (reader.nextName() == "last_update") {
+                    newestVersion = reader.nextString()
+                    Log.d("NewestVersion", newestVersion)
+                }
+            }
+        }
+        return newestVersion
+    }
+
+    suspend fun updater(context: Context): String {
+        val dataStoreKey = stringPreferencesKey("last_update")
+        val preferences = context.dataStore.data.first()
+        val installedVersion = preferences[dataStoreKey] ?: ""
+        Log.d("InstalledVersion", installedVersion)
+        return installedVersion
+//        if (installedVersion == "") {
+//                withContext(Dispatchers.IO) {
+//                    this@MainActivity.dataStore.edit { settings ->
+//                        settings[stringPreferencesKey("last_update")] = newestVersion
+//                        updated = true
+//                    }
+//                }
+//        } else if (newestVersion == "") {
+//            LaunchedEffect(key1 = newestVersion) {
+//                val websiteUrl =
+//                    URL("https://raw.githubusercontent.com/Sajeg/olibrary-db-updater/master/info.json")
+//                val inputStream = withContext(Dispatchers.IO) {
+//                    websiteUrl.openStream()
+//                }
+//                JsonReader(InputStreamReader(inputStream)).use { reader ->
+//                    reader.beginObject()
+//                    if (reader.hasNext()) {
+//                        if (reader.nextName() == "last_update") {
+//                            newestVersion = reader.nextString()
+//                            Log.d("NewestVersion", newestVersion)
+//                        }
+//                    }
+//                }
+//            }
+//        } else if (newestVersion != installedVersion) {
+//            DownloadDialog(this)
+//            LaunchedEffect(updated) {
+//                withContext(Dispatchers.IO) {
+//                    this@MainActivity.dataStore.edit { settings ->
+//                        settings[stringPreferencesKey("last_update")] = newestVersion
+//                        updated = true
+//                    }
+//                }
+//            }
+//        }
+    }
 
     fun startDBDownload(context: Context, background: Boolean = false) {
         Log.d("DownloadManager", "Started Download")
