@@ -10,16 +10,30 @@ import java.net.URL
 object BookData {
     private lateinit var currentBook: Book
     private lateinit var bookDetailsDoc: Document
+    var isbn: String = ""
+    var desc: String = ""
 
     fun getCurrentBook(): Book {
         return currentBook
     }
 
-    fun getDesc(): String? {
-        return try {
-            bookDetailsDoc.select("div.arena-detail-description div.arena-value span")
+    fun fetchBookData() {
+        try {
+            val url = getCurrentBook().url
+            val websiteUrl = URL(url)
+            val connection = websiteUrl.openConnection() as HttpURLConnection
+            connection.instanceFollowRedirects = true
+
+            val inputStream = connection.inputStream
+
+            bookDetailsDoc = Jsoup.parse(inputStream.bufferedReader().use { it.readText() })
+            desc = bookDetailsDoc.select("div.arena-detail-description div.arena-value span")
                 .lastOrNull()!!.text()
-        } catch (e:Exception) { null }
+            isbn = bookDetailsDoc.select("div.arena-detail-isbn div.arena-value span")
+                .lastOrNull()!!.text()
+        } catch (e: Exception) {
+            Log.e("WebsiteFetcher", "Error fetching content: $e")
+        }
     }
 
     fun addBookData(
@@ -44,17 +58,5 @@ object BookData {
             imgUrl = imageLink,
             url = url
         )
-
-        try {
-            val websiteUrl = URL(url)
-            val connection = websiteUrl.openConnection() as HttpURLConnection
-            connection.instanceFollowRedirects = true
-
-            val inputStream = connection.inputStream
-
-            bookDetailsDoc = Jsoup.parse(inputStream.bufferedReader().use { it.readText() })
-        } catch (e: Exception) {
-            Log.e("WebsiteFetcher", "Error fetching content: $e")
-        }
     }
 }

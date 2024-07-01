@@ -11,7 +11,7 @@ data class Book(
     val imgUrl: String,
     val url: String
 ) {
-    fun getAuthorFormated(): String {
+    fun getAuthorFormated(onlyName: Boolean = false): String {
         if (author == "") {
             return ""
         }
@@ -20,10 +20,13 @@ data class Book(
                 .replace("[", "")
                 .replace("]", "")
                 .split(",")
-            val output = if (names.size == 4) {
-                "Von ${names[1]} ${names[0]} und ${names[3]} ${names[2]}"
+            var output = if (names.size == 4) {
+                "${names[1]} ${names[0]} und ${names[3]} ${names[2]}"
             } else {
-                "Von ${names[1]} ${names[0]}"
+                "${names[1]} ${names[0]}"
+            }
+            if (!onlyName) {
+                output = "Von $output"
             }
             return output
         } catch (e: Exception) {

@@ -7,12 +7,10 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -24,10 +22,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
@@ -36,8 +32,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.bumptech.glide.Glide
+import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
+import com.bumptech.glide.integration.compose.GlideImage
 import com.sajeg.olibrary.MainActivity
 import com.sajeg.olibrary.R
 import com.sajeg.olibrary.ui.theme.OLibraryTheme
@@ -66,6 +63,11 @@ class BookInfo : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             OLibraryTheme {
+                LaunchedEffect(key1 = BookData.desc) {
+                    withContext(Dispatchers.IO) {
+                        BookData.fetchBookData()
+                    }
+                }
                 Scaffold(
                     modifier = Modifier.fillMaxSize(),
                     topBar = {
@@ -84,12 +86,9 @@ class BookInfo : ComponentActivity() {
                         )
                     }
                 ) { innerPadding ->
-                    LazyColumn {
-                        item {
-                            DisplayBookCover(Modifier.padding(innerPadding))
-                            DisplayBookInfo(Modifier.padding(innerPadding))
-                        }
-                    }
+                    val contentModifier = Modifier
+                        .padding(innerPadding)
+                    DisplayBookInfo(contentModifier)
                 }
             }
         }
@@ -125,53 +124,45 @@ fun DisplayBookCover(modifier: Modifier) {
                 bitmap = bitmap.value!!.asImageBitmap(),
                 contentDescription = "Cover",
                 contentScale = ContentScale.Crop,
-                modifier = Modifier.drawWithContent {
-                    drawContent()
-                    drawRect(
-                        brush = Brush.verticalGradient(
-                            colors = listOf(Color.Transparent, background),
-                            startY = size.height / 2,
-                            endY = size.height
-                        )
-//                                blendMode = BlendMode.Multiply
-                    )
-                }
+                modifier = Modifier.padding(15.dp)
             )
-
         }
-//        if (bitmap.value != null) {
-//            Row(
-//                horizontalArrangement = Arrangement.Center
-//            ) {
-//                Image(
-//                    painter = GradientImagePainter(BitmapPainter(bitmap.value!!.asImageBitmap())),
-////                    bitmap = bitmap.value!!.asImageBitmap(),
-//                    contentDescription = "Cover",
-//                    modifier = Modifier.size(width + 170.dp),
-////                    contentScale = ContentScale.FillWidth,
-//                )
-//            }
-//        } else {
-//            Text("Loading Image...")
-//        }
     }
 }
 
+@OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun DisplayBookInfo(modifier: Modifier) {
-    Column(
-        modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(text = BookData.getCurrentBook().title, style = MaterialTheme.typography.displayLarge)
-        Text(
-            text = "Von ${BookData.getCurrentBook().author}",
-            style = MaterialTheme.typography.titleMedium
+    Column {
+        GlideImage(
+            model = BookData.getCurrentBook().imgUrl,
+            contentDescription = "Das Cover",
+            modifier = Modifier
+                .fillMaxSize()
+                .blur(50.dp),
         )
-        Row(horizontalArrangement = Arrangement.Start) {
-            Text(text = "Bla Bla Description", fontSize = 20.sp)
-            Text(text = "Bla Bla Data", fontSize = 20.sp)
+    }
+    Column(
+        modifier.fillMaxSize().padding(20.dp),
+    ) {
+        Row {
+            GlideImage(
+                model = BookData.getCurrentBook().imgUrl,
+                contentDescription = "Das Cover",
+            )
+            Column (
+                modifier = Modifier.padding(start = 20.dp)
+            ){
+                Text(text = "Autor*in: ${BookData.getCurrentBook().getAuthorFormated(true)}")
+                Text(text = "Jahr: ${BookData.getCurrentBook().year}")
+                Text(text = "Sprache: ${BookData.getCurrentBook().language}")
+                Text(text = "Reihe: ${BookData.getCurrentBook().series}")
+                Text(text = "Genre: ${BookData.getCurrentBook().genre}")
+                Text(text = "ISBN: ${BookData.isbn}")
+            }
+        }
+        Column {
+            Text(text = BookData.desc)
         }
     }
 }
