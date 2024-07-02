@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -32,6 +33,7 @@ import androidx.room.Room
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
+import com.sajeg.olibrary.Book
 import com.sajeg.olibrary.MainActivity
 import com.sajeg.olibrary.R
 import com.sajeg.olibrary.database.AppDatabase
@@ -47,6 +49,7 @@ import java.net.URL
 
 class Activity : ComponentActivity() {
     private lateinit var db: AppDatabase
+    private var scannedCode = false
     private val requestPermissionLauncher =
         registerForActivityResult(
             ActivityResultContracts.RequestPermission()
@@ -117,13 +120,15 @@ class Activity : ComponentActivity() {
                         }
                     }
                     CameraPreview(controller = controller, Modifier.fillMaxSize())
-                    scanQRCodes(this, controller)
+                    if (!scannedCode) {
+                        scanQRCodes(this, controller)
+                    }
                 }
             }
         }
     }
 
-    fun scanQRCodes(context: Context, cameraController: CameraController) {
+    private fun scanQRCodes(context: Context, cameraController: CameraController) {
         val options = BarcodeScannerOptions.Builder()
             .setBarcodeFormats(Barcode.FORMAT_EAN_13, Barcode.FORMAT_EAN_8)
             .build()
@@ -136,6 +141,7 @@ class Activity : ComponentActivity() {
                 ImageAnalysis.COORDINATE_SYSTEM_ORIGINAL,
                 ContextCompat.getMainExecutor(context)
             ) { result: MlKitAnalyzer.Result? ->
+                scannedCode = true
                 if (result == null) {
                     return@MlKitAnalyzer
                 }
@@ -145,10 +151,14 @@ class Activity : ComponentActivity() {
                 if (result.getValue(scanner)!!.size == 0) {
                     return@MlKitAnalyzer
                 }
+                Toast.makeText(this@Activity, "Searching book...", Toast.LENGTH_LONG).show()
                 val qrCode = result.getValue(scanner)!![0]
                 val ean: String = qrCode.rawValue.toString()
                 CoroutineScope(Dispatchers.IO).launch {
-                    openBook(getBookId(ean).toInt())
+                    val id = getBookId(ean).toInt()
+                    if (id != -2 && id != -1) {
+                        openBook(id)
+                    }
                 }
             }
         )
@@ -190,28 +200,33 @@ class Activity : ComponentActivity() {
                 if (id != null) {
                     return@withContext id.text()
                 } else {
-                    return@withContext "Book does not exist in Bibliothek"
+                    Toast.makeText(this@Activity, "Book not in library", Toast.LENGTH_LONG).show()
+                    return@withContext "-2"
                 }
             } catch (e: Exception) {
                 Log.e("WebsiteFetcher", "Error fetching content: $e")
-                return@withContext "ERROR Occurred"
+                Toast.makeText(this@Activity, "An error occurred", Toast.LENGTH_SHORT).show()
+                return@withContext "-1"
             }
         }
     }
 
-    private fun openBook(id: Int) {
-        val book = db.bookDao().getById(id)
+    private suspend fun openBook(id: Int) {
+        var book: Book? = null
+        CoroutineScope(Dispatchers.IO).launch {
+            book = db.bookDao().getById(id)
+        }.join()
         if (book != null) {
             startActivity(Intent(this, BookInfo::class.java).apply {
-                putExtra("recordId", book.recordId)
-                putExtra("title", book.title)
-                putExtra("author", book.author)
-                putExtra("year", book.year)
-                putExtra("language", book.language)
-                putExtra("genre", book.genre)
-                putExtra("series", book.series)
-                putExtra("imageLink", book.imgUrl)
-                putExtra("url", book.url)
+                putExtra("recordId", book!!.recordId)
+                putExtra("title", book!!.title)
+                putExtra("author", book!!.author)
+                putExtra("year", book!!.year)
+                putExtra("language", book!!.language)
+                putExtra("genre", book!!.genre)
+                putExtra("series", book!!.series)
+                putExtra("imageLink", book!!.imgUrl)
+                putExtra("url", book!!.url)
             })
         }
     }
