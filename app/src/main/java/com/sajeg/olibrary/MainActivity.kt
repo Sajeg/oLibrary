@@ -5,12 +5,10 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.net.ConnectivityManager
-import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -28,6 +26,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SearchBar
 import androidx.compose.material3.Text
@@ -61,7 +61,6 @@ class MainActivity : ComponentActivity() {
     private lateinit var downloadReceiver: DownloadReceiver
     private lateinit var db: AppDatabase
 
-    @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         downloadReceiver = DownloadReceiver()
@@ -73,9 +72,41 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             OLibraryTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                Scaffold(bottomBar = {
+                    NavigationBar{
+                        NavigationBarItem(
+                            selected = true,
+                            onClick = {  },
+                            icon = {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.home),
+                                    contentDescription = ""
+                                )
+                            }
+                        )
+                        NavigationBarItem(
+                            selected = false,
+                            onClick = { activateQRCode() },
+                            icon = {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.qrcode),
+                                    contentDescription = ""
+                                )
+                            }
+                        )
+                        NavigationBarItem(
+                            selected = false,
+                            onClick = { /*TODO*/ },
+                            icon = {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.person),
+                                    contentDescription = ""
+                                )
+                            }
+                        )
+                    }
+                }, modifier = Modifier.fillMaxSize()) { innerPadding ->
                     MainCompose(Modifier.padding(innerPadding), BookSearchViewModel(db.bookDao()))
-                    HomeScreen()
                     val connectivityManager = getSystemService(ConnectivityManager::class.java)
                     if (!connectivityManager.isActiveNetworkMetered) {
                         CheckForUpdates()
@@ -88,6 +119,10 @@ class MainActivity : ComponentActivity() {
     override fun onDestroy() {
         super.onDestroy()
         unregisterReceiver(downloadReceiver)
+    }
+
+    private fun activateQRCode() {
+        startActivity(Intent(this, com.sajeg.olibrary.qrcodescanner.Activity::class.java))
     }
 
     private fun changeActivity(data: Book) {
