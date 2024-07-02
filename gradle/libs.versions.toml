@@ -12,6 +12,7 @@ activityCompose = "1.9.0"
 composeBom = "2024.06.00"
 roomVersion = "2.6.1"
 startupRuntime = "1.1.1"
+cameraMlkitVision = "1.4.0-beta02"
 
 [libraries]
 androidx-activity = { module = "androidx.activity:activity", version.ref = "activityCompose" }
@@ -35,6 +36,7 @@ androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-man
 androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
 kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlinxCoroutinesAndroid" }
+androidx-camera-mlkit-vision = { group = "androidx.camera", name = "camera-mlkit-vision", version.ref = "cameraMlkitVision" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

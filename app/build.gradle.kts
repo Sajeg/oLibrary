@@ -53,6 +53,7 @@ android {
 
 dependencies {
     implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.camera.mlkit.vision)
     annotationProcessor(libs.androidx.room.compiler)
     implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.datastore.preferences)
@@ -75,6 +76,10 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation(libs.androidx.activity)
     implementation(libs.kotlinx.coroutines.android)
+    implementation("com.google.mlkit:barcode-scanning:17.2.0")
+    implementation("androidx.camera:camera-camera2:1.3.3")
+    implementation("androidx.camera:camera-lifecycle:1.3.3")
+    implementation("androidx.camera:camera-view:1.3.3")
     implementation("org.jsoup:jsoup:1.15.3")
     implementation("com.github.bumptech.glide:compose:1.0.0-beta01")
 }
