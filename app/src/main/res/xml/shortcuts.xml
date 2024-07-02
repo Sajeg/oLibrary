@@ -1,0 +1,13 @@
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="qrcodescan"
+        android:enabled="true"
+        android:icon="@drawable/qrcode"
+        android:shortcutShortLabel="@string/qr_shortcut_short"
+        android:shortcutLongLabel="@string/qr_shortcut_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.sajeg.olibrary"
+            android:targetClass="com.sajeg.olibrary.qrcodescanner.Activity" />
+    </shortcut>
+</shortcuts>

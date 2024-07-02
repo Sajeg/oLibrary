@@ -3,4 +3,6 @@
     <string name="title_activity_book_info">BookInfo</string>
     <string name="title_activity_activty">Activty</string>
     <string name="test">Test</string>
+    <string name="qr_shortcut_short">Scan Books</string>
+    <string name="qr_shortcut_long">Scan barcodes of Books</string>
 </resources>
