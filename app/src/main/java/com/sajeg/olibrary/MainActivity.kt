@@ -11,6 +11,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -20,6 +21,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -72,6 +75,7 @@ class MainActivity : ComponentActivity() {
             OLibraryTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     MainCompose(Modifier.padding(innerPadding), BookSearchViewModel(db.bookDao()))
+                    HomeScreen()
                     val connectivityManager = getSystemService(ConnectivityManager::class.java)
                     if (!connectivityManager.isActiveNetworkMetered) {
                         CheckForUpdates()
@@ -184,12 +188,16 @@ class MainActivity : ComponentActivity() {
     }
 
     @SuppressLint("MutableCollectionMutableState")
-    @OptIn(ExperimentalMaterial3Api::class, ExperimentalGlideComposeApi::class)
+    @OptIn(
+        ExperimentalMaterial3Api::class, ExperimentalGlideComposeApi::class
+    )
     @Composable
     fun MainCompose(modifier: Modifier = Modifier, viewModel: BookSearchViewModel) {
         val searchQuery by viewModel.searchQuery.collectAsState()
         val searchResults by viewModel.searchResults.collectAsState()
         var isActive by remember { mutableStateOf(false) }
+
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Center
@@ -239,6 +247,26 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             )
+        }
+    }
+
+    @OptIn(ExperimentalFoundationApi::class, ExperimentalGlideComposeApi::class)
+    @Composable
+    fun HomeScreen() {
+        var recommendations by remember { mutableStateOf<List<Book>>(listOf()) }
+        LaunchedEffect(key1 = recommendations) {
+            CoroutineScope(Dispatchers.IO).launch {
+                recommendations = db.bookDao().getRandomBooks(5)
+            }
+        }
+        val state = rememberPagerState(pageCount = { recommendations.size })
+
+        Row (
+            modifier = Modifier.fillMaxSize()
+        ){
+            HorizontalPager(state = state) { page ->
+                GlideImage(model = recommendations[page], contentDescription = "Book Cover")
+            }
         }
     }
 }
