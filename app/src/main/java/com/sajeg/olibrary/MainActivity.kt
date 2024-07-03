@@ -53,6 +53,7 @@ import androidx.core.content.ContextCompat
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
+import androidx.navigation.compose.rememberNavController
 import androidx.room.Room
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
@@ -94,6 +95,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             OLibraryTheme {
+                val navController = rememberNavController()
                 Scaffold(bottomBar = {
                     NavigationBar{
                         NavigationBarItem(
