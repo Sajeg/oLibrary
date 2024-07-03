@@ -12,12 +12,7 @@ interface BookDao {
     @Query("SELECT COUNT(*) FROM books")
     fun getRowCount(): Int
 
-    @Query(
-        """ SELECT *
-        FROM books
-        WHERE books MATCH '*' || :query || '*'
-        LIMIT 30"""
-    )
+    @Query("SELECT rowid, * FROM books WHERE books MATCH '*' || :query || '*' LIMIT 30")
     fun search(query: String): List<Book>
 
     @Query("SELECT * FROM books WHERE rowid LIKE :id")

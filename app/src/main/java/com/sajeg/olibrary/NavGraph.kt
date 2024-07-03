@@ -25,13 +25,13 @@ fun SetupNavGraph(
             HomeScreen(navController)
         }
         composable(
-            route = Screen.Details.route,
+            route = Screen.Details.route + "/{book}",
             arguments = listOf(navArgument("book") {
                 type = NavType.IntType
                 nullable = false
             })
         ) { entry ->
-            DisplayBookInfo(entry.arguments.getInt("book"))
+            DisplayBookInfo(entry.arguments!!.getInt("book"))
         }
         composable(
             route = Screen.QRCode.route

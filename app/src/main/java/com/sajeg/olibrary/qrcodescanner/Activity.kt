@@ -42,7 +42,6 @@ import com.sajeg.olibrary.Book
 import com.sajeg.olibrary.MainActivity
 import com.sajeg.olibrary.R
 import com.sajeg.olibrary.database.AppDatabase
-import com.sajeg.olibrary.details.BookInfo
 import com.sajeg.olibrary.ui.theme.OLibraryTheme
 import com.sajeg.olibrary.webview.Account
 import kotlinx.coroutines.CoroutineScope
@@ -268,18 +267,6 @@ class Activity : ComponentActivity() {
             book = db.bookDao().getById(id)
         }.join()
         if (book != null) {
-            val intent = Intent(this, BookInfo::class.java).apply {
-                putExtra("recordId", book!!.recordId)
-                putExtra("title", book!!.title)
-                putExtra("author", book!!.author)
-                putExtra("year", book!!.year)
-                putExtra("language", book!!.language)
-                putExtra("genre", book!!.genre)
-                putExtra("series", book!!.series)
-                putExtra("imageLink", book!!.imgUrl)
-                putExtra("url", book!!.url)
-                putExtra("notificationId", notificationId)
-            }
             val builder = NotificationCompat.Builder(this, "TEST_BACKGROUND")
                 .setSmallIcon(R.drawable.qrcode)
                 .setContentTitle("Scan Result")

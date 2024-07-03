@@ -109,6 +109,6 @@ fun DisplayBookInfo(recordId: Int) {
     }
 }
 
-fun getDesc(url: String) {
-
+fun getDesc(url: String) : String {
+    return "Base"
 }

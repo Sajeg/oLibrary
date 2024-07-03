@@ -28,7 +28,6 @@ import com.google.mlkit.vision.barcode.common.Barcode
 import com.sajeg.olibrary.Book
 import com.sajeg.olibrary.R
 import com.sajeg.olibrary.db
-import com.sajeg.olibrary.details.BookInfo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -195,19 +194,8 @@ private suspend fun openBook(id: Int, notificationId: Int = 0, context: Context)
     CoroutineScope(Dispatchers.IO).launch {
         book = db.bookDao().getById(id)
     }.join()
+    val intent = Intent(context, Activity::class.java)
     if (book != null) {
-        val intent = Intent(context, BookInfo::class.java).apply {
-            putExtra("recordId", book!!.recordId)
-            putExtra("title", book!!.title)
-            putExtra("author", book!!.author)
-            putExtra("year", book!!.year)
-            putExtra("language", book!!.language)
-            putExtra("genre", book!!.genre)
-            putExtra("series", book!!.series)
-            putExtra("imageLink", book!!.imgUrl)
-            putExtra("url", book!!.url)
-            putExtra("notificationId", notificationId)
-        }
         val builder = NotificationCompat.Builder(context, "TEST_BACKGROUND")
             .setSmallIcon(R.drawable.qrcode)
             .setContentTitle("Scan Result")
