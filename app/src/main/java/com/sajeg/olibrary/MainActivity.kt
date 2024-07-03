@@ -1,14 +1,21 @@
 package com.sajeg.olibrary
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.ConnectivityManager
+import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -42,6 +49,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
@@ -60,15 +68,28 @@ val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "se
 class MainActivity : ComponentActivity() {
     private lateinit var downloadReceiver: DownloadReceiver
     private lateinit var db: AppDatabase
+    private val requestPermissionLauncher =
+        registerForActivityResult(
+            ActivityResultContracts.RequestPermission()
+        ) {}
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        createNotificationChannel()
         downloadReceiver = DownloadReceiver()
         db = Room.databaseBuilder(
             this,
             AppDatabase::class.java, "library"
         ).build()
-
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        } else {
+            Log.d("Permission", "Already granted")
+        }
         enableEdgeToEdge()
         setContent {
             OLibraryTheme {
@@ -137,6 +158,20 @@ class MainActivity : ComponentActivity() {
             putExtra("imageLink", data.imgUrl)
             putExtra("url", data.url)
         })
+    }
+
+    private fun createNotificationChannel() {
+        val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.createNotificationChannel(NotificationChannel(
+            "TEST_BACKGROUND",
+            "Background test",
+            NotificationManager.IMPORTANCE_DEFAULT
+        ))
+        notificationManager.createNotificationChannel(NotificationChannel(
+            "SCAN_RESULT",
+            "Book Scan",
+            NotificationManager.IMPORTANCE_DEFAULT
+        ))
     }
 
     @Composable

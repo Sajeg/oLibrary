@@ -28,7 +28,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.app.ActivityCompat
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.room.Room
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning
@@ -46,6 +50,7 @@ import kotlinx.coroutines.withContext
 import org.jsoup.Jsoup
 import java.net.HttpURLConnection
 import java.net.URL
+import kotlin.random.Random
 
 class Activity : ComponentActivity() {
     private lateinit var db: AppDatabase
@@ -133,7 +138,9 @@ class Activity : ComponentActivity() {
             .setBarcodeFormats(Barcode.FORMAT_EAN_13, Barcode.FORMAT_EAN_8)
             .build()
         val scanner = BarcodeScanning.getClient(options)
-
+        if (scannedCode) {
+            return
+        }
         cameraController.setImageAnalysisAnalyzer(
             ContextCompat.getMainExecutor(context),
             MlKitAnalyzer(
@@ -154,10 +161,25 @@ class Activity : ComponentActivity() {
                 Toast.makeText(this@Activity, "Searching book...", Toast.LENGTH_LONG).show()
                 val qrCode = result.getValue(scanner)!![0]
                 val ean: String = qrCode.rawValue.toString()
-                CoroutineScope(Dispatchers.IO).launch {
-                    val id = getBookId(ean).toInt()
+                lifecycleScope.launch {
+                    val id = withContext(Dispatchers.IO) {
+                        getBookId(ean).toInt()
+                    }
+
                     if (id != -2 && id != -1) {
                         openBook(id)
+                    } else if (id == -2) {
+                        withContext(Dispatchers.Main) {
+                            sendNotification("Book is not in the library")
+                            Toast.makeText(this@Activity, "Book not in library", Toast.LENGTH_SHORT)
+                                .show()
+                        }
+                    } else {
+                        withContext(Dispatchers.Main) {
+                            sendNotification("An error occurred")
+                            Toast.makeText(this@Activity, "An error occurred", Toast.LENGTH_SHORT)
+                                .show()
+                        }
                     }
                 }
             }
@@ -181,6 +203,26 @@ class Activity : ComponentActivity() {
         )
     }
 
+    fun sendNotification(status: String): Int {
+        val builder = NotificationCompat.Builder(this, "TEST_BACKGROUND")
+            .setSmallIcon(R.drawable.qrcode)
+            .setContentTitle("Scan Result")
+            .setContentText(status)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+        val id = Random.nextInt()
+        with(NotificationManagerCompat.from(this)) {
+            if (ActivityCompat.checkSelfPermission(
+                    this@Activity,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                return@with
+            }
+            notify(id, builder.build())
+        }
+        return id
+    }
+
     private suspend fun getBookId(ean: String): String {
         return withContext(Dispatchers.IO) {
             try {
@@ -200,18 +242,16 @@ class Activity : ComponentActivity() {
                 if (id != null) {
                     return@withContext id.text()
                 } else {
-                    Toast.makeText(this@Activity, "Book not in library", Toast.LENGTH_LONG).show()
                     return@withContext "-2"
                 }
             } catch (e: Exception) {
                 Log.e("WebsiteFetcher", "Error fetching content: $e")
-                Toast.makeText(this@Activity, "An error occurred", Toast.LENGTH_SHORT).show()
                 return@withContext "-1"
             }
         }
     }
 
-    private suspend fun openBook(id: Int) {
+    private suspend fun openBook(id: Int, notificationId: Int = 0) {
         var book: Book? = null
         CoroutineScope(Dispatchers.IO).launch {
             book = db.bookDao().getById(id)
@@ -227,6 +267,7 @@ class Activity : ComponentActivity() {
                 putExtra("series", book!!.series)
                 putExtra("imageLink", book!!.imgUrl)
                 putExtra("url", book!!.url)
+                putExtra("notificationId", notificationId)
             })
         }
     }
