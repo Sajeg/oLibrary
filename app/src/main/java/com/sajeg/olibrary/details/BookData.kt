@@ -29,15 +29,6 @@ object BookData {
             bookDetailsDoc = Jsoup.parse(inputStream.bufferedReader().use { it.readText() })
             desc = bookDetailsDoc.select("div.arena-detail-description div.arena-value span")
                 .lastOrNull()!!.text()
-//            isbn = bookDetailsDoc.select("div.arena-detail-isbn div.arena-value span").lastOrNull()!!.text()
-            val outerDiv = bookDetailsDoc.select("div.arena-availability-right")
-            if (outerDiv.isEmpty()) {
-                Log.d("Available", "not found")
-            } else {
-                Log.d("Available", "found")
-            }
-//            val availabilityElement = bookDetailsDoc.select("div.arena-availability-right span").first()!!.text()
-            Log.d("HTML", bookDetailsDoc.html())
         } catch (e: Exception) {
             Log.e("WebsiteFetcher", "Error fetching content: $e")
         }

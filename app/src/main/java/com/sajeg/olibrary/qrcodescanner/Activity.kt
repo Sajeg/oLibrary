@@ -1,6 +1,7 @@
 package com.sajeg.olibrary.qrcodescanner
 
 import android.Manifest
+import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -55,6 +56,8 @@ import kotlin.random.Random
 class Activity : ComponentActivity() {
     private lateinit var db: AppDatabase
     private var scannedCode = false
+    private var lastProcessedTime = 0L
+    private val cooldownPeriod = 10000
     private val requestPermissionLauncher =
         registerForActivityResult(
             ActivityResultContracts.RequestPermission()
@@ -148,7 +151,10 @@ class Activity : ComponentActivity() {
                 ImageAnalysis.COORDINATE_SYSTEM_ORIGINAL,
                 ContextCompat.getMainExecutor(context)
             ) { result: MlKitAnalyzer.Result? ->
-                scannedCode = true
+                val currentTime = System.currentTimeMillis()
+                if (currentTime - lastProcessedTime < cooldownPeriod) {
+                    return@MlKitAnalyzer
+                }
                 if (result == null) {
                     return@MlKitAnalyzer
                 }
@@ -158,6 +164,8 @@ class Activity : ComponentActivity() {
                 if (result.getValue(scanner)!!.size == 0) {
                     return@MlKitAnalyzer
                 }
+                scannedCode = true
+                lastProcessedTime = currentTime
                 Toast.makeText(this@Activity, "Searching book...", Toast.LENGTH_LONG).show()
                 val qrCode = result.getValue(scanner)!![0]
                 val ean: String = qrCode.rawValue.toString()
@@ -203,12 +211,14 @@ class Activity : ComponentActivity() {
         )
     }
 
-    fun sendNotification(status: String): Int {
+    private fun sendNotification(status: String): Int {
+        val intent = Intent(this, Activity::class.java)
         val builder = NotificationCompat.Builder(this, "TEST_BACKGROUND")
             .setSmallIcon(R.drawable.qrcode)
             .setContentTitle("Scan Result")
             .setContentText(status)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setContentIntent(PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE))
         val id = Random.nextInt()
         with(NotificationManagerCompat.from(this)) {
             if (ActivityCompat.checkSelfPermission(
@@ -257,7 +267,7 @@ class Activity : ComponentActivity() {
             book = db.bookDao().getById(id)
         }.join()
         if (book != null) {
-            startActivity(Intent(this, BookInfo::class.java).apply {
+            val intent = Intent(this, BookInfo::class.java).apply {
                 putExtra("recordId", book!!.recordId)
                 putExtra("title", book!!.title)
                 putExtra("author", book!!.author)
@@ -268,7 +278,25 @@ class Activity : ComponentActivity() {
                 putExtra("imageLink", book!!.imgUrl)
                 putExtra("url", book!!.url)
                 putExtra("notificationId", notificationId)
-            })
+            }
+            val builder = NotificationCompat.Builder(this, "TEST_BACKGROUND")
+                .setSmallIcon(R.drawable.qrcode)
+                .setContentTitle("Scan Result")
+                .setStyle(NotificationCompat.BigTextStyle()
+                    .bigText("Found the Book ${book!!.title} ${book!!.getAuthorFormated()}"))
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setContentIntent(PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE))
+            with(NotificationManagerCompat.from(this)) {
+                if (ActivityCompat.checkSelfPermission(
+                        this@Activity,
+                        Manifest.permission.POST_NOTIFICATIONS
+                    ) != PackageManager.PERMISSION_GRANTED
+                ) {
+                    return@with
+                }
+                notify(id, builder.build())
+            }
+            startActivity(intent)
         }
     }
 
