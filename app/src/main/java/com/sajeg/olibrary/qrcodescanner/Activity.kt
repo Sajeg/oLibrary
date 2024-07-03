@@ -110,7 +110,7 @@ class Activity : ComponentActivity() {
                         )
                         NavigationBarItem(
                             selected = false,
-                            onClick = { switchToMain() },
+                            onClick = { switchToAccount() },
                             icon = {
                                 Icon(
                                     painter = painterResource(id = R.drawable.person),
