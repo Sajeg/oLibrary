@@ -1,12 +1,8 @@
 package com.sajeg.olibrary.webview
 
 import android.annotation.SuppressLint
-import android.app.Dialog
 import android.content.Intent
 import android.os.Bundle
-import android.os.Message
-import android.webkit.WebChromeClient
-import android.webkit.WebView
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -18,7 +14,6 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.viewinterop.AndroidView
 import com.sajeg.olibrary.MainActivity
 import com.sajeg.olibrary.R
 import com.sajeg.olibrary.ui.theme.OLibraryTheme
@@ -66,33 +61,6 @@ class Account : ComponentActivity() {
                 }
                 ) { innerPadding ->
                     var modifier = Modifier.padding(innerPadding)
-                    AndroidView(factory = {
-                        WebView(it).apply {
-                            settings.javaScriptEnabled = true
-                            settings.loadsImagesAutomatically = true
-                            settings.domStorageEnabled = true
-                            settings.setSupportMultipleWindows(true)
-                            webChromeClient = object : WebChromeClient() {
-                                override fun onCreateWindow(view: WebView?, isDialog: Boolean, isUserGesture: Boolean, resultMsg: Message?): Boolean {
-                                    val newWebView = WebView(view!!.context)
-                                    newWebView.settings.javaScriptEnabled = true
-                                    newWebView.settings.domStorageEnabled = true
-                                    newWebView.settings.setSupportMultipleWindows(true)
-
-                                    val dialog = Dialog(view.context)
-                                    dialog.setContentView(newWebView)
-                                    dialog.show()
-
-                                    val transport = resultMsg?.obj as WebView.WebViewTransport
-                                    transport.webView = newWebView
-                                    resultMsg.sendToTarget()
-                                    return true
-                                }
-                            }
-                            webViewClient = CustomWebViewClient()
-                            loadUrl("https://www.stadtbibliothek.oldenburg.de/protected/my-account/overview")
-                        }
-                    })
                 }
             }
         }

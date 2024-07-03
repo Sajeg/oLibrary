@@ -1,6 +1,6 @@
 package com.sajeg.olibrary
 
-data class Book(
+open class Book(
     val recordId: Int?,
     val title: String,
     val author: String,
