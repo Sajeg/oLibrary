@@ -44,6 +44,7 @@ import com.sajeg.olibrary.R
 import com.sajeg.olibrary.database.AppDatabase
 import com.sajeg.olibrary.details.BookInfo
 import com.sajeg.olibrary.ui.theme.OLibraryTheme
+import com.sajeg.olibrary.webview.Account
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -99,7 +100,7 @@ class Activity : ComponentActivity() {
                         )
                         NavigationBarItem(
                             selected = true,
-                            onClick = { /*TODO*/ },
+                            onClick = { },
                             icon = {
                                 Icon(
                                     painter = painterResource(id = R.drawable.qrcode),
@@ -109,7 +110,7 @@ class Activity : ComponentActivity() {
                         )
                         NavigationBarItem(
                             selected = false,
-                            onClick = { /*TODO*/ },
+                            onClick = { switchToMain() },
                             icon = {
                                 Icon(
                                     painter = painterResource(id = R.drawable.person),
@@ -302,5 +303,9 @@ class Activity : ComponentActivity() {
 
     private fun switchToMain() {
         startActivity(Intent(this, MainActivity::class.java))
+    }
+
+    private fun switchToAccount() {
+        startActivity(Intent(this, Account::class.java))
     }
 }

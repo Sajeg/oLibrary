@@ -59,6 +59,7 @@ import com.bumptech.glide.integration.compose.GlideImage
 import com.sajeg.olibrary.database.AppDatabase
 import com.sajeg.olibrary.details.BookInfo
 import com.sajeg.olibrary.ui.theme.OLibraryTheme
+import com.sajeg.olibrary.webview.Account
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -117,7 +118,7 @@ class MainActivity : ComponentActivity() {
                         )
                         NavigationBarItem(
                             selected = false,
-                            onClick = { /*TODO*/ },
+                            onClick = { switchToAccount() },
                             icon = {
                                 Icon(
                                     painter = painterResource(id = R.drawable.person),
@@ -144,6 +145,10 @@ class MainActivity : ComponentActivity() {
 
     private fun activateQRCode() {
         startActivity(Intent(this, com.sajeg.olibrary.qrcodescanner.Activity::class.java))
+    }
+
+    private fun switchToAccount() {
+        startActivity(Intent(this, Account::class.java))
     }
 
     private fun changeActivity(data: Book) {
