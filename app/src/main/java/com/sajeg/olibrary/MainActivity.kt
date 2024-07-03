@@ -8,7 +8,6 @@ import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.ConnectivityManager
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -22,7 +21,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -53,6 +51,7 @@ import androidx.core.content.ContextCompat
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import androidx.room.Room
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
@@ -70,6 +69,7 @@ val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "se
 class MainActivity : ComponentActivity() {
     private lateinit var downloadReceiver: DownloadReceiver
     private lateinit var db: AppDatabase
+    lateinit var navController: NavHostController
     private val requestPermissionLauncher =
         registerForActivityResult(
             ActivityResultContracts.RequestPermission()
@@ -95,7 +95,8 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             OLibraryTheme {
-                val navController = rememberNavController()
+                navController = rememberNavController()
+
                 Scaffold(bottomBar = {
                     NavigationBar{
                         NavigationBarItem(
@@ -130,11 +131,12 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                 }, modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    MainCompose(Modifier.padding(innerPadding), BookSearchViewModel(db.bookDao()))
-                    val connectivityManager = getSystemService(ConnectivityManager::class.java)
-                    if (!connectivityManager.isActiveNetworkMetered) {
-                        CheckForUpdates()
-                    }
+                    SetupNavGraph(navController = navController)
+//                    MainCompose(Modifier.padding(innerPadding), BookSearchViewModel(db.bookDao()))
+//                    val connectivityManager = getSystemService(ConnectivityManager::class.java)
+//                    if (!connectivityManager.isActiveNetworkMetered) {
+//                        CheckForUpdates()
+//                    }
                 }
             }
         }
