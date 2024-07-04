@@ -9,9 +9,7 @@
             android:action="android.intent.action.VIEW"
             android:targetClass="com.sajeg.olibrary.MainActivity"
             android:targetPackage="com.sajeg.olibrary">
-            <extra
-                android:name="navigation_destination"
-                android:value="Screen.QRCode.route" />
+            <extra android:name="navigation_route" android:value="qrcode" />
         </intent>
     </shortcut>
 </shortcuts>

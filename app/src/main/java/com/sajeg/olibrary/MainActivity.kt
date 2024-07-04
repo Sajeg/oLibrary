@@ -4,6 +4,7 @@ import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -76,6 +77,20 @@ class MainActivity : ComponentActivity() {
                     modifierPadding = Modifier.padding(innerPadding)
                     SetupNavGraph(navController = navController)
                 }
+            }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleNavigationIntent(intent)
+    }
+
+    private fun handleNavigationIntent(intent: Intent) {
+        intent.getStringExtra("navigation_route")?.let { route ->
+            Log.d("Intent", route)
+            if (route == "qrcode") {
+                navController.navigate(QRCode)
             }
         }
     }
