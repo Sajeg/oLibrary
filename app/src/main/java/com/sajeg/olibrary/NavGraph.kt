@@ -24,7 +24,7 @@ fun SetupNavGraph(
             val id = it.toRoute<Details>().recordId
             val title = it.toRoute<Details>().bookTitle
             DetailScreen(navController = navController, recordId = id, bookTitle = title) }
-        composable<QRCode> { ScannerScreen(context = LocalContext.current) }
+        composable<QRCode> { ScannerScreen(context = LocalContext.current, navController) }
         composable<Account> { AccountScreen() }
     }
 }

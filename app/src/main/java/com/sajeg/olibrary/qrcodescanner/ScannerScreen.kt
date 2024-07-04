@@ -22,10 +22,13 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import androidx.navigation.NavController
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.sajeg.olibrary.Book
+import com.sajeg.olibrary.Details
+import com.sajeg.olibrary.MainActivity
 import com.sajeg.olibrary.R
 import com.sajeg.olibrary.db
 import kotlinx.coroutines.CoroutineScope
@@ -42,7 +45,7 @@ var lastProcessedTime = 0L
 const val cooldownPeriod = 10000
 
 @Composable
-fun ScannerScreen(context: Context) {
+fun ScannerScreen(context: Context, navController: NavController) {
     val controller = remember {
         LifecycleCameraController(context).apply {
             setEnabledUseCases(
@@ -52,12 +55,16 @@ fun ScannerScreen(context: Context) {
     }
     CameraPreview(controller = controller, Modifier.fillMaxSize())
     if (!scannedCode) {
-        scanQRCodes(context, controller)
+        scanQRCodes(context, controller, navController)
     }
 }
 
 
-fun scanQRCodes(context: Context, cameraController: CameraController) {
+fun scanQRCodes(
+    context: Context,
+    cameraController: CameraController,
+    navController: NavController
+) {
     val options = BarcodeScannerOptions.Builder()
         .setBarcodeFormats(Barcode.FORMAT_EAN_13, Barcode.FORMAT_EAN_8)
         .build()
@@ -96,7 +103,7 @@ fun scanQRCodes(context: Context, cameraController: CameraController) {
                 }
 
                 if (id != -2 && id != -1) {
-                    openBook(id, context = context)
+                    openBook(id, context = context, navController = navController)
                 } else if (id == -2) {
                     withContext(Dispatchers.Main) {
                         sendNotification("Book is not in the library", context)
@@ -133,19 +140,14 @@ fun CameraPreview(
 }
 
 private fun sendNotification(status: String, context: Context): Int {
-    val intent = Intent(context, Activity::class.java)
+    val intent = createNotificationIntent(context, "QRCode")
     val builder = NotificationCompat.Builder(context, "TEST_BACKGROUND")
         .setSmallIcon(R.drawable.qrcode)
         .setContentTitle("Scan Result")
         .setContentText(status)
         .setPriority(NotificationCompat.PRIORITY_DEFAULT)
         .setContentIntent(
-            PendingIntent.getActivity(
-                context,
-                0,
-                intent,
-                PendingIntent.FLAG_IMMUTABLE
-            )
+            intent
         )
     val id = Random.nextInt()
     with(NotificationManagerCompat.from(context)) {
@@ -189,14 +191,19 @@ private suspend fun getBookId(ean: String): String {
     }
 }
 
-private suspend fun openBook(id: Int, notificationId: Int = 0, context: Context) {
+private suspend fun openBook(
+    id: Int,
+    notificationId: Int = 0,
+    context: Context,
+    navController: NavController
+) {
     var book: Book? = null
     CoroutineScope(Dispatchers.IO).launch {
         book = db.bookDao().getById(id)
     }.join()
-    val intent = Intent(context, Activity::class.java)
+    val intent = createNotificationIntent(context, "HomeScreen")
     if (book != null) {
-        val builder = NotificationCompat.Builder(context, "TEST_BACKGROUND")
+        val builder = NotificationCompat.Builder(context, "SCAN_RESULT")
             .setSmallIcon(R.drawable.qrcode)
             .setContentTitle("Scan Result")
             .setStyle(
@@ -205,12 +212,7 @@ private suspend fun openBook(id: Int, notificationId: Int = 0, context: Context)
             )
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setContentIntent(
-                PendingIntent.getActivity(
-                    context,
-                    0,
-                    intent,
-                    PendingIntent.FLAG_IMMUTABLE
-                )
+                intent
             )
         with(NotificationManagerCompat.from(context)) {
             if (ActivityCompat.checkSelfPermission(
@@ -222,5 +224,21 @@ private suspend fun openBook(id: Int, notificationId: Int = 0, context: Context)
             }
             notify(id, builder.build())
         }
+        withContext(Dispatchers.Main) {
+            navController.navigate(Details(book!!.rowid!!, book!!.title))
+        }
     }
+}
+
+fun createNotificationIntent(context: Context, route: String): PendingIntent {
+    val intent = Intent(context, MainActivity::class.java).apply {
+        putExtra("navigation_route", route)
+        flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+    }
+    return PendingIntent.getActivity(
+        context,
+        route.hashCode(),
+        intent,
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+    )
 }

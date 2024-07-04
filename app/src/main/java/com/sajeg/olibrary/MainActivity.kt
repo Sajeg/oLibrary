@@ -39,7 +39,7 @@ var modifierPadding: Modifier = Modifier
 
 class MainActivity : ComponentActivity() {
     private lateinit var downloadReceiver: DownloadReceiver
-    lateinit var navController: NavHostController
+    private lateinit var navController: NavHostController
     private val requestPermissionLauncher =
         registerForActivityResult(
             ActivityResultContracts.RequestPermission()
