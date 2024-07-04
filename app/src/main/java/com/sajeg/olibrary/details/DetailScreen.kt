@@ -12,8 +12,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.blur
@@ -22,14 +25,29 @@ import androidx.compose.ui.unit.dp
 import com.bumptech.glide.Glide
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
+import com.sajeg.olibrary.Book
 import com.sajeg.olibrary.db
+import com.sajeg.olibrary.modifierPadding
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jsoup.Jsoup
+import java.net.HttpURLConnection
+import java.net.URL
 
 @OptIn(ExperimentalGlideComposeApi::class, ExperimentalLayoutApi::class)
 @Composable
 fun DisplayBookInfo(recordId: Int) {
-    val book = db.bookDao().getById(recordId)!!
+    var book by remember { mutableStateOf(Book(0, "", "", "", "", "", "", "", "")) }
+    LaunchedEffect(book) {
+        CoroutineScope(Dispatchers.IO).launch {
+            book = db.bookDao().getById(recordId)!!
+        }
+    }
+    if (book.rowid == 0) {
+        return
+    }
 
     val imageHeight = remember { mutableIntStateOf(0) }
     val glideImage =
@@ -54,7 +72,7 @@ fun DisplayBookInfo(recordId: Int) {
         )
     }
     Column(
-        Modifier
+        modifierPadding
             .fillMaxSize()
             .padding(20.dp),
     ) {
@@ -104,11 +122,31 @@ fun DisplayBookInfo(recordId: Int) {
         Column(
             modifier = Modifier.padding(top = 20.dp)
         ) {
-            Text(text = getDesc(book.url))
+            var desc by remember { mutableStateOf("Loading...") }
+            LaunchedEffect(desc) {
+                CoroutineScope(Dispatchers.IO).launch {
+                    desc = getDesc(book.url)
+                }
+            }
+            Text(text = desc)
         }
     }
 }
 
-fun getDesc(url: String) : String {
-    return "Base"
+fun getDesc(url: String): String {
+    try {
+
+        val websiteUrl = URL(url)
+        val connection = websiteUrl.openConnection() as HttpURLConnection
+        connection.instanceFollowRedirects = true
+
+        val inputStream = connection.inputStream
+
+        val bookDetailsDoc = Jsoup.parse(inputStream.bufferedReader().use { it.readText() })
+        return bookDetailsDoc.select("div.arena-detail-description div.arena-value span")
+            .firstOrNull()!!.text()
+    } catch (e: Exception) {
+        Log.e("BookDescription", e.toString())
+        return "Error. Try again later"
+    }
 }

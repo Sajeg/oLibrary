@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -52,7 +53,7 @@ fun HomeScreen(navController: NavController) {
     }
 
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().safeDrawingPadding(),
         horizontalArrangement = Arrangement.Center
     ) {
         SearchBar(
@@ -77,8 +78,7 @@ fun HomeScreen(navController: NavController) {
                         item {
                             ListItem(
                                 modifier = Modifier.clickable {
-                                    Log.d("BOSDKJD", book.toString())
-                                    navController.navigate(Screen.Home.withIntArgs(book.recordId!!))
+                                    navController.navigate(Details(book.rowid!!))
                                 },
                                 headlineContent = { Text(text = book.title) },
                                 leadingContent = {

@@ -8,7 +8,7 @@ import androidx.room.PrimaryKey
 @Fts4
 @Entity(tableName = "Books")
 data class BookDBItem(
-    @PrimaryKey @ColumnInfo(name = "rowid") val recordId: Int,
+    @PrimaryKey @ColumnInfo(name = "rowid") val rowid: Int,
     @ColumnInfo(name = "title") val title: String,
     @ColumnInfo(name = "author") val author: String,
     @ColumnInfo(name = "year") val year: String,

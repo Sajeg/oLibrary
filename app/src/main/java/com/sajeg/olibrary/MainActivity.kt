@@ -14,6 +14,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -44,6 +45,7 @@ import kotlinx.coroutines.launch
 
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 lateinit var db: AppDatabase
+var modifierPadding: Modifier = Modifier
 
 class MainActivity : ComponentActivity() {
     private lateinit var downloadReceiver: DownloadReceiver
@@ -78,9 +80,10 @@ class MainActivity : ComponentActivity() {
                 Scaffold(
                     bottomBar = {
                         NavigationBar {
+                            var selectedItem by remember { mutableStateOf("Home") }
                             NavigationBarItem(
-                                selected = true,
-                                onClick = { navController.navigate(Screen.Home.route) },
+                                selected = (selectedItem == "Home"),
+                                onClick = { navController.navigate(HomeScreen); selectedItem = "Home" },
                                 icon = {
                                     Icon(
                                         painter = painterResource(id = R.drawable.home),
@@ -89,8 +92,8 @@ class MainActivity : ComponentActivity() {
                                 }
                             )
                             NavigationBarItem(
-                                selected = false,
-                                onClick = { navController.navigate(Screen.QRCode.route) },
+                                selected = (selectedItem == "QR"),
+                                onClick = { navController.navigate(QRCode); selectedItem = "QR" },
                                 icon = {
                                     Icon(
                                         painter = painterResource(id = R.drawable.qrcode),
@@ -99,8 +102,8 @@ class MainActivity : ComponentActivity() {
                                 }
                             )
                             NavigationBarItem(
-                                selected = false,
-                                onClick = { navController.navigate(Screen.Account.route) },
+                                selected = (selectedItem == "Account"),
+                                onClick = { navController.navigate(Account); selectedItem = "Account" },
                                 icon = {
                                     Icon(
                                         painter = painterResource(id = R.drawable.person),
@@ -112,6 +115,7 @@ class MainActivity : ComponentActivity() {
                     },
                     modifier = Modifier.fillMaxSize()
                 ) { innerPadding ->
+                    modifierPadding = Modifier.padding(innerPadding)
                     SetupNavGraph(navController = navController)
 //                    MainCompose(Modifier.padding(innerPadding), BookSearchViewModel(db.bookDao()))
 //                    val connectivityManager = getSystemService(ConnectivityManager::class.java)

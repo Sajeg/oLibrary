@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
     alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.kotlin.serialization)
     id("com.google.devtools.ksp")
 }
 
@@ -79,6 +80,8 @@ dependencies {
     implementation(libs.androidx.navigation.fragment.ktx)
     implementation(libs.androidx.navigation.ui.ktx)
     implementation(libs.androidx.navigation.compose)
+    implementation(libs.navigation.compose)
+    implementation(libs.kotlinx.serialization.json)
     implementation("com.google.mlkit:barcode-scanning:17.2.0")
     implementation("androidx.camera:camera-camera2:1.3.3")
     implementation("androidx.camera:camera-lifecycle:1.3.3")
