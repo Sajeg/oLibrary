@@ -35,6 +35,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.room.Room
 import com.sajeg.olibrary.database.AppDatabase
@@ -79,39 +80,7 @@ class MainActivity : ComponentActivity() {
 
                 Scaffold(
                     bottomBar = {
-                        NavigationBar {
-                            var selectedItem by remember { mutableStateOf("Home") }
-                            NavigationBarItem(
-                                selected = (selectedItem == "Home"),
-                                onClick = { navController.navigate(HomeScreen); selectedItem = "Home" },
-                                icon = {
-                                    Icon(
-                                        painter = painterResource(id = R.drawable.home),
-                                        contentDescription = ""
-                                    )
-                                }
-                            )
-                            NavigationBarItem(
-                                selected = (selectedItem == "QR"),
-                                onClick = { navController.navigate(QRCode); selectedItem = "QR" },
-                                icon = {
-                                    Icon(
-                                        painter = painterResource(id = R.drawable.qrcode),
-                                        contentDescription = ""
-                                    )
-                                }
-                            )
-                            NavigationBarItem(
-                                selected = (selectedItem == "Account"),
-                                onClick = { navController.navigate(Account); selectedItem = "Account" },
-                                icon = {
-                                    Icon(
-                                        painter = painterResource(id = R.drawable.person),
-                                        contentDescription = ""
-                                    )
-                                }
-                            )
-                        }
+                        BottomNavBar(navController = navController)
                     },
                     modifier = Modifier.fillMaxSize()
                 ) { innerPadding ->
@@ -130,6 +99,44 @@ class MainActivity : ComponentActivity() {
     override fun onDestroy() {
         super.onDestroy()
         unregisterReceiver(downloadReceiver)
+    }
+
+    @Composable
+    fun BottomNavBar(navController: NavHostController) {
+        val navBackStackEntry by navController.currentBackStackEntryAsState()
+        val currentDestination = navBackStackEntry?.destination
+        NavigationBar {
+            NavigationBarItem(
+                selected = if (currentDestination != null) currentDestination.route == "com.sajeg.olibrary.HomeScreen" else false,
+                onClick = { navController.navigate(HomeScreen) },
+                icon = {
+                    Icon(
+                        painter = painterResource(id = R.drawable.home),
+                        contentDescription = ""
+                    )
+                }
+            )
+            NavigationBarItem(
+                selected = if (currentDestination != null) currentDestination.route == "com.sajeg.olibrary.QRCode" else false,
+                onClick = { navController.navigate(QRCode) },
+                icon = {
+                    Icon(
+                        painter = painterResource(id = R.drawable.qrcode),
+                        contentDescription = ""
+                    )
+                }
+            )
+            NavigationBarItem(
+                selected = if (currentDestination != null) currentDestination.route == "com.sajeg.olibrary.Account" else false,
+                onClick = { navController.navigate(Account) },
+                icon = {
+                    Icon(
+                        painter = painterResource(id = R.drawable.person),
+                        contentDescription = ""
+                    )
+                }
+            )
+        }
     }
 
     private fun createNotificationChannel() {

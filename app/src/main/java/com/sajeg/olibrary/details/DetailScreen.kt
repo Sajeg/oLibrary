@@ -135,7 +135,6 @@ fun DisplayBookInfo(recordId: Int) {
 
 fun getDesc(url: String): String {
     try {
-
         val websiteUrl = URL(url)
         val connection = websiteUrl.openConnection() as HttpURLConnection
         connection.instanceFollowRedirects = true
