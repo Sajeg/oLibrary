@@ -89,7 +89,7 @@ fun HomeScreen(navController: NavController) {
                         item {
                             ListItem(
                                 modifier = Modifier.clickable {
-                                    navController.navigate(Details(book.rowid!!))
+                                    navController.navigate(Details(book.rowid!!, book.title))
                                 },
                                 headlineContent = { Text(text = book.title) },
                                 leadingContent = {

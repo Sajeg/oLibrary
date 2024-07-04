@@ -1,5 +1,6 @@
 package com.sajeg.olibrary.details
 
+import android.content.Intent
 import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -8,8 +9,13 @@ import androidx.compose.foundation.layout.FlowColumn
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -21,13 +27,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
+import androidx.navigation.NavController
 import com.bumptech.glide.Glide
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.sajeg.olibrary.Book
+import com.sajeg.olibrary.R
 import com.sajeg.olibrary.db
-import com.sajeg.olibrary.modifierPadding
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -36,18 +45,73 @@ import org.jsoup.Jsoup
 import java.net.HttpURLConnection
 import java.net.URL
 
-@OptIn(ExperimentalGlideComposeApi::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DisplayBookInfo(recordId: Int) {
+fun DetailScreen(navController: NavController, recordId: Int, bookTitle: String) {
+    val context = LocalContext.current
     var book by remember { mutableStateOf(Book(0, "", "", "", "", "", "", "", "")) }
     LaunchedEffect(book) {
         CoroutineScope(Dispatchers.IO).launch {
             book = db.bookDao().getById(recordId)!!
         }
     }
-    if (book.rowid == 0) {
+    if (book.title == "") {
         return
     }
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { bookTitle },
+                navigationIcon = {
+                    IconButton(
+                        onClick = { navController.popBackStack() },
+                        content = {
+                            Icon(
+                                painter = painterResource(id = R.drawable.back),
+                                contentDescription = "Go Back"
+                            )
+                        })
+                },
+                actions = {
+                    IconButton(
+                        onClick = {
+                            val sendIntent: Intent = Intent().apply {
+                                action = Intent.ACTION_SEND
+                                putExtra(
+                                    Intent.EXTRA_TEXT,
+                                    book.url
+                                )
+                                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                type = "text/plain"
+                            }
+
+                            val shareIntent =
+                                Intent.createChooser(sendIntent, "Share the Book")
+                            ContextCompat.startActivity(
+                                context,
+                                shareIntent,
+                                null
+                            )
+                        },
+                        content = {
+                            Icon(
+                                painter = painterResource(id = R.drawable.share),
+                                contentDescription = "Share the Book"
+                            )
+                        }
+                    )
+                })
+        }
+    ) { innerPadding ->
+        DisplayBookInfo(recordId = recordId, Modifier.padding(innerPadding), book)
+    }
+}
+
+@OptIn(
+    ExperimentalGlideComposeApi::class, ExperimentalLayoutApi::class
+)
+@Composable
+fun DisplayBookInfo(recordId: Int, modifier: Modifier, book: Book) {
 
     val imageHeight = remember { mutableIntStateOf(0) }
     val glideImage =
@@ -72,7 +136,7 @@ fun DisplayBookInfo(recordId: Int) {
         )
     }
     Column(
-        modifierPadding
+        modifier
             .fillMaxSize()
             .padding(20.dp),
     ) {
