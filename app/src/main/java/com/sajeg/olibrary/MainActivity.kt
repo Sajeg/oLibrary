@@ -147,8 +147,10 @@ class MainActivity : ComponentActivity() {
             NotificationChannel(
                 "TEST_BACKGROUND",
                 "Background test",
-                NotificationManager.IMPORTANCE_DEFAULT
-            )
+                NotificationManager.IMPORTANCE_DEFAULT,
+            ).apply {
+                setShowBadge(false)
+            }
         )
         notificationManager.createNotificationChannel(
             NotificationChannel(

@@ -32,14 +32,14 @@ class UpdateDbBackground : JobService() {
     override fun onStopJob(params: JobParameters?): Boolean {
         Log.d(TAG, "Job stopped")
         mHandler.removeCallbacksAndMessages(null)
-        return true // Reschedule the job
+        return true
     }
 
     private fun showNotification() {
         val builder = NotificationCompat.Builder(this, "TEST_BACKGROUND")
             .setSmallIcon(R.drawable.qrcode)
             .setContentTitle("Job ran")
-            .setContentText("This is just to let you knocw that the job just ran")
+            .setContentText("This is just to let you know that the job just ran")
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
 
         with(NotificationManagerCompat.from(this)) {
@@ -57,12 +57,13 @@ class UpdateDbBackground : JobService() {
 
     companion object {
         fun scheduleJob(context: Context) {
-            val jobScheduler = context.getSystemService(Context.JOB_SCHEDULER_SERVICE) as JobScheduler
+            val jobScheduler =
+                context.getSystemService(Context.JOB_SCHEDULER_SERVICE) as JobScheduler
             val componentName = ComponentName(context, UpdateDbBackground::class.java)
 
             val jobInfo = JobInfo.Builder(1, componentName)
                 .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
-                .setPeriodic(JobInfo.getMinPeriodMillis())
+                .setPeriodic(2 * 24 * 60 * 1000)
                 .setPersisted(true)
                 .build()
 
