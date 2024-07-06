@@ -30,6 +30,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -65,6 +66,7 @@ fun HomeScreen(navController: NavController) {
                 }
             }
         } else {
+            Text(text = "Zufällige Bücher: ", modifier = Modifier.padding(horizontal = 15.dp))
             LazyRow(
                 modifier = Modifier.padding(horizontal = 15.dp)
             ) {
@@ -95,7 +97,8 @@ fun Search(navController: NavController) {
     var searchResults by remember { mutableStateOf<List<Book>>(emptyList()) }
     var isActive by remember { mutableStateOf(false) }
     var filter by remember { mutableStateOf("*") }
-
+    var refresh by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(searchQuery) {
         if (searchQuery.isNotEmpty()) {
@@ -106,6 +109,16 @@ fun Search(navController: NavController) {
             Log.d("Results", searchResults.toString())
         } else {
             searchResults = mutableListOf()
+        }
+    }
+    if (refresh) {
+        LaunchedEffect(refresh) {
+            coroutineScope.launch {
+                searchResults = withContext(Dispatchers.IO) {
+                    db.bookDao().search(searchQuery, filter)
+                }
+                refresh = false
+            }
         }
     }
 
@@ -138,35 +151,35 @@ fun Search(navController: NavController) {
                     val count = 5
                     SegmentedButton(
                         selected = filter == "*",
-                        onClick = { filter = "*" },
+                        onClick = { filter = "*"; refresh = true },
                         shape = SegmentedButtonDefaults.itemShape(0, count)
                     ) {
                         Text(text = "All")
                     }
                     SegmentedButton(
                         selected = filter == "title:",
-                        onClick = { filter = "title:" },
+                        onClick = { filter = "title:"; refresh = true },
                         shape = SegmentedButtonDefaults.itemShape(1, count)
                     ) {
                         Text(text = "Title")
                     }
                     SegmentedButton(
                         selected = filter == "author:",
-                        onClick = { filter = "author:" },
+                        onClick = { filter = "author:"; refresh = true },
                         shape = SegmentedButtonDefaults.itemShape(2, count)
                     ) {
                         Text(text = "Author")
                     }
                     SegmentedButton(
                         selected = filter == "series:",
-                        onClick = { filter = "series:" },
+                        onClick = { filter = "series:"; refresh = true },
                         shape = SegmentedButtonDefaults.itemShape(3, count)
                     ) {
                         Text(text = "Series")
                     }
                     SegmentedButton(
                         selected = filter == "genre:",
-                        onClick = { filter = "genre:" },
+                        onClick = { filter = "genre:"; refresh = true },
                         shape = SegmentedButtonDefaults.itemShape(4, count)
                     ) {
                         Text(text = "Genre")
@@ -188,10 +201,21 @@ fun Search(navController: NavController) {
                                     )
                                 },
                                 supportingContent = {
+                                    var desc = book.getAuthorFormated()
+                                    if (book.year != "") {
+                                        desc += " aus dem Jahr ${book.year}"
+                                    }
+                                    if (book.language != "") {
+                                        desc += " auf ${book.language}"
+                                    }
+                                    if (book.series != "") {
+                                        desc += " in der Reihe ${book.series}"
+                                    }
+                                    if (book.genre != "") {
+                                        desc += " als ${book.genre}"
+                                    }
                                     Text(
-                                        text = "${book.getAuthorFormated()} aus dem year ${book.year} " +
-                                                "auf ${book.language} in der Reihe ${book.series} " +
-                                                "als ${book.genre}"
+                                        text = desc
                                     )
                                 }
                             )
