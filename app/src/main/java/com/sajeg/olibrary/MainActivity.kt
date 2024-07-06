@@ -33,6 +33,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.room.Room
 import com.sajeg.olibrary.database.AppDatabase
 import com.sajeg.olibrary.database.DownloadReceiver
+import com.sajeg.olibrary.database.UpdateDbBackground
 import com.sajeg.olibrary.ui.theme.OLibraryTheme
 
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
@@ -64,6 +65,7 @@ class MainActivity : ComponentActivity() {
         } else {
             Log.d("Permission", "Already granted")
         }
+        UpdateDbBackground.scheduleJob(this)
         enableEdgeToEdge()
         setContent {
             OLibraryTheme {

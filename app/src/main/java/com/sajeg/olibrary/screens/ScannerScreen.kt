@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
@@ -38,7 +37,6 @@ import kotlinx.coroutines.withContext
 import org.jsoup.Jsoup
 import java.net.HttpURLConnection
 import java.net.URL
-import kotlin.random.Random
 
 var scannedCode = false
 var lastProcessedTime = 0L
@@ -106,13 +104,13 @@ fun scanQRCodes(
                     openBook(id, context = context, navController = navController)
                 } else if (id == -2) {
                     withContext(Dispatchers.Main) {
-                        sendNotification("Book is not in the library", context)
+//                        sendNotification("Book is not in the library", context)
                         Toast.makeText(context, "Book not in library", Toast.LENGTH_SHORT)
                             .show()
                     }
                 } else {
                     withContext(Dispatchers.Main) {
-                        sendNotification("An error occurred", context)
+//                        sendNotification("An error occurred", context)
                         Toast.makeText(context, "An error occurred", Toast.LENGTH_SHORT)
                             .show()
                     }
@@ -127,7 +125,7 @@ fun CameraPreview(
     controller: LifecycleCameraController,
     modifier: Modifier
 ) {
-    val lifecycleOwner = LocalLifecycleOwner.current
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
     AndroidView(
         factory = {
             PreviewView(it).apply {
@@ -139,29 +137,29 @@ fun CameraPreview(
     )
 }
 
-private fun sendNotification(status: String, context: Context): Int {
-    val intent = createNotificationIntent(context, "QRCode")
-    val builder = NotificationCompat.Builder(context, "TEST_BACKGROUND")
-        .setSmallIcon(R.drawable.qrcode)
-        .setContentTitle("Scan Result")
-        .setContentText(status)
-        .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-        .setContentIntent(
-            intent
-        )
-    val id = Random.nextInt()
-    with(NotificationManagerCompat.from(context)) {
-        if (ActivityCompat.checkSelfPermission(
-                context,
-                Manifest.permission.POST_NOTIFICATIONS
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            return@with
-        }
-        notify(id, builder.build())
-    }
-    return id
-}
+//private fun sendNotification(status: String, context: Context): Int {
+//    val intent = createNotificationIntent(context, "QRCode")
+//    val builder = NotificationCompat.Builder(context, "TEST_BACKGROUND")
+//        .setSmallIcon(R.drawable.qrcode)
+//        .setContentTitle("Scan Result")
+//        .setContentText(status)
+//        .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+//        .setContentIntent(
+//            intent
+//        )
+//    val id = Random.nextInt()
+//    with(NotificationManagerCompat.from(context)) {
+//        if (ActivityCompat.checkSelfPermission(
+//                context,
+//                Manifest.permission.POST_NOTIFICATIONS
+//            ) != PackageManager.PERMISSION_GRANTED
+//        ) {
+//            return@with
+//        }
+//        notify(id, builder.build())
+//    }
+//    return id
+//}
 
 private suspend fun getBookId(ean: String): String {
     return withContext(Dispatchers.IO) {
