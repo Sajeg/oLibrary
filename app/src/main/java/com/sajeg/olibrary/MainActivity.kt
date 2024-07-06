@@ -32,6 +32,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.room.Room
 import com.sajeg.olibrary.database.AppDatabase
+import com.sajeg.olibrary.database.DownloadReceiver
 import com.sajeg.olibrary.ui.theme.OLibraryTheme
 
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
@@ -125,16 +126,16 @@ class MainActivity : ComponentActivity() {
                     )
                 }
             )
-            NavigationBarItem(
-                selected = if (currentDestination != null) currentDestination.route == "com.sajeg.olibrary.Account" else false,
-                onClick = { navController.navigate(Account) },
-                icon = {
-                    Icon(
-                        painter = painterResource(id = R.drawable.person),
-                        contentDescription = ""
-                    )
-                }
-            )
+//            NavigationBarItem(
+//                selected = if (currentDestination != null) currentDestination.route == "com.sajeg.olibrary.Account" else false,
+//                onClick = { navController.navigate(Account) },
+//                icon = {
+//                    Icon(
+//                        painter = painterResource(id = R.drawable.person),
+//                        contentDescription = ""
+//                    )
+//                }
+//            )
         }
     }
 

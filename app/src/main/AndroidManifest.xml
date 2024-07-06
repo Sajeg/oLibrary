@@ -44,7 +44,7 @@
             tools:node="remove" />
 
         <receiver
-            android:name=".DownloadReceiver"
+            android:name=".database.DownloadReceiver"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.DOWNLOAD_COMPLETE" />
@@ -52,7 +52,7 @@
         </receiver>
 
         <service
-            android:name=".UpdateDbBackground"
+            android:name=".database.UpdateDbBackground"
             android:permission="android.permission.BIND_JOB_SERVICE" />
     </application>
 

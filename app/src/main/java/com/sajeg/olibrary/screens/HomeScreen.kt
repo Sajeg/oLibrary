@@ -1,4 +1,4 @@
-package com.sajeg.olibrary
+package com.sajeg.olibrary.screens
 
 import android.annotation.SuppressLint
 import android.app.Activity
@@ -6,11 +6,14 @@ import android.content.Context
 import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -32,22 +35,62 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
+import com.sajeg.olibrary.Book
+import com.sajeg.olibrary.Details
+import com.sajeg.olibrary.R
+import com.sajeg.olibrary.database.DatabaseBookManager
+import com.sajeg.olibrary.db
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+@OptIn(ExperimentalGlideComposeApi::class)
 @SuppressLint("MutableCollectionMutableState")
+
+@Composable
+fun HomeScreen(navController: NavController) {
+    var recommendations by remember { mutableStateOf<List<Book>?>(null) }
+    CheckForUpdates(LocalContext.current)
+    Column {
+        Search(navController = navController)
+
+        if (recommendations == null) {
+            LaunchedEffect(recommendations) {
+                CoroutineScope(Dispatchers.IO).launch {
+                    recommendations = db.bookDao().getRandomBooks(5)
+                }
+            }
+        } else {
+            LazyRow (
+                modifier = Modifier.padding(horizontal = 15.dp)
+            ){
+                for (book in recommendations!!) {
+                    item {
+                        GlideImage(
+                            model = book.imgUrl,
+                            contentDescription = "Recommendation",
+                            modifier = Modifier.size(height = 200.dp, width = 150.dp).clickable {
+                                navController.navigate(Details(book.rowid!!, book.title))
+                            }
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
 @OptIn(
     ExperimentalMaterial3Api::class, ExperimentalGlideComposeApi::class
 )
-@Composable
-fun HomeScreen(navController: NavController) {
+fun Search(navController: NavController) {
     var searchQuery by remember { mutableStateOf("") }
     var searchResults by remember { mutableStateOf<List<Book>>(emptyList()) }
     var isActive by remember { mutableStateOf(false) }
 
-    CheckForUpdates(LocalContext.current)
+
 
     LaunchedEffect(searchQuery) {
         if (searchQuery.isNotEmpty()) {

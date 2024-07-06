@@ -1,4 +1,4 @@
-package com.sajeg.olibrary
+package com.sajeg.olibrary.database
 
 import android.Manifest
 import android.app.job.JobInfo
@@ -12,6 +12,7 @@ import android.os.Looper
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import com.sajeg.olibrary.R
 import kotlin.random.Random
 
 class UpdateDbBackground : JobService() {

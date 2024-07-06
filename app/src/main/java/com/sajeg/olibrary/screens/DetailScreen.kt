@@ -1,4 +1,4 @@
-package com.sajeg.olibrary.details
+package com.sajeg.olibrary.screens
 
 import android.content.Intent
 import android.util.Log

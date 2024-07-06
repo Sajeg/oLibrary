@@ -1,4 +1,4 @@
-package com.sajeg.olibrary
+package com.sajeg.olibrary.database
 
 import android.app.DownloadManager
 import android.content.Context
@@ -9,8 +9,7 @@ import android.util.Log
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.room.Room
-import com.sajeg.olibrary.database.AppDatabase
-import com.sajeg.olibrary.database.BookDBItem
+import com.sajeg.olibrary.dataStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext

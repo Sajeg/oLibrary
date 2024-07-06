@@ -6,9 +6,10 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
-import com.sajeg.olibrary.details.DetailScreen
-import com.sajeg.olibrary.qrcodescanner.ScannerScreen
-import com.sajeg.olibrary.webview.AccountScreen
+import com.sajeg.olibrary.screens.DetailScreen
+import com.sajeg.olibrary.screens.ScannerScreen
+import com.sajeg.olibrary.screens.AccountScreen
+import com.sajeg.olibrary.screens.HomeScreen
 import kotlinx.serialization.Serializable
 
 @Composable

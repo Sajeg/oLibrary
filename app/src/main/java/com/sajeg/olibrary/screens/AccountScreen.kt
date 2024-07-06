@@ -1,4 +1,4 @@
-package com.sajeg.olibrary.webview
+package com.sajeg.olibrary.screens
 
 import android.annotation.SuppressLint
 import android.webkit.WebView

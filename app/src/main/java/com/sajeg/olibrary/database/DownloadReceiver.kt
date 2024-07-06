@@ -1,4 +1,4 @@
-package com.sajeg.olibrary
+package com.sajeg.olibrary.database
 
 import android.app.DownloadManager
 import android.content.BroadcastReceiver

@@ -1,4 +1,4 @@
-package com.sajeg.olibrary.qrcodescanner
+package com.sajeg.olibrary.screens
 
 import android.Manifest
 import android.app.PendingIntent
