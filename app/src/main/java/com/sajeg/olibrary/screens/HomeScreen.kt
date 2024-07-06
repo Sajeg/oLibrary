@@ -53,7 +53,7 @@ import kotlinx.coroutines.withContext
 @SuppressLint("MutableCollectionMutableState")
 
 @Composable
-fun HomeScreen(navController: NavController) {
+fun HomeScreen(navController: NavController, searchQuery: String? = null, searchFilter: String? = null) {
     var recommendations by remember { mutableStateOf<List<Book>?>(null) }
     CheckForUpdates(LocalContext.current)
     Column {

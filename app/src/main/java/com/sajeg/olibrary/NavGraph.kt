@@ -6,10 +6,10 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
-import com.sajeg.olibrary.screens.DetailScreen
-import com.sajeg.olibrary.screens.ScannerScreen
 import com.sajeg.olibrary.screens.AccountScreen
+import com.sajeg.olibrary.screens.DetailScreen
 import com.sajeg.olibrary.screens.HomeScreen
+import com.sajeg.olibrary.screens.ScannerScreen
 import kotlinx.serialization.Serializable
 
 @Composable
@@ -18,9 +18,13 @@ fun SetupNavGraph(
 ) {
     NavHost(
         navController = navController,
-        startDestination = HomeScreen
+        startDestination = HomeScreen(null, null)
     ) {
-        composable<HomeScreen> { HomeScreen(navController) }
+        composable<HomeScreen> {
+            val searchQuery = it.toRoute<HomeScreen>().searchQuery
+            val searchFilter = it.toRoute<HomeScreen>().searchFilter
+           HomeScreen(navController, searchQuery, searchFilter)
+        }
         composable<Details> {
             val id = it.toRoute<Details>().recordId
             val title = it.toRoute<Details>().bookTitle
@@ -31,7 +35,10 @@ fun SetupNavGraph(
 }
 
 @Serializable
-object HomeScreen
+data class HomeScreen(
+    val searchQuery: String? = null,
+    val searchFilter: String? = null
+)
 
 @Serializable
 object QRCode

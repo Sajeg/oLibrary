@@ -2,6 +2,7 @@ package com.sajeg.olibrary.screens
 
 import android.content.Intent
 import android.util.Log
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -35,6 +36,7 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.sajeg.olibrary.Book
+import com.sajeg.olibrary.HomeScreen
 import com.sajeg.olibrary.R
 import com.sajeg.olibrary.db
 import kotlinx.coroutines.CoroutineScope
@@ -103,7 +105,7 @@ fun DetailScreen(navController: NavController, recordId: Int, bookTitle: String)
                 })
         }
     ) { innerPadding ->
-        DisplayBookInfo(recordId = recordId, Modifier.padding(innerPadding), book)
+        DisplayBookInfo(navController, recordId, Modifier.padding(innerPadding), book)
     }
 }
 
@@ -111,7 +113,7 @@ fun DetailScreen(navController: NavController, recordId: Int, bookTitle: String)
     ExperimentalGlideComposeApi::class, ExperimentalLayoutApi::class
 )
 @Composable
-fun DisplayBookInfo(recordId: Int, modifier: Modifier, book: Book) {
+fun DisplayBookInfo(navController: NavController, recordId: Int, modifier: Modifier, book: Book) {
 
     val imageHeight = remember { mutableIntStateOf(0) }
     val glideImage =
@@ -170,6 +172,9 @@ fun DisplayBookInfo(recordId: Int, modifier: Modifier, book: Book) {
                 }
                 if (book.series!!.isNotBlank()) {
                     Text(
+                        modifier = Modifier.clickable {
+                            navController.navigate(HomeScreen(searchQuery = book.series, searchFilter = "series:"))
+                        },
                         text = "Reihe: ${book.series}",
                         color = MaterialTheme.colorScheme.onBackground
                     )
