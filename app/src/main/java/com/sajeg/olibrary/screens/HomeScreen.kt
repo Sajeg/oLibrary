@@ -3,7 +3,6 @@ package com.sajeg.olibrary.screens
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
-import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -49,15 +48,20 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-@OptIn(ExperimentalGlideComposeApi::class)
+@OptIn(ExperimentalGlideComposeApi::class, ExperimentalMaterial3Api::class)
 @SuppressLint("MutableCollectionMutableState")
 
 @Composable
-fun HomeScreen(navController: NavController, searchQuery: String? = null, searchFilter: String? = null) {
+fun HomeScreen(
+    navController: NavController,
+    searchQuery: String? = null,
+    searchFilter: String? = null
+) {
     var recommendations by remember { mutableStateOf<List<Book>?>(null) }
+
     CheckForUpdates(LocalContext.current)
     Column {
-        Search(navController = navController)
+        Search(navController = navController, searchQuery, searchFilter)
 
         if (recommendations == null) {
             LaunchedEffect(recommendations) {
@@ -92,23 +96,28 @@ fun HomeScreen(navController: NavController, searchQuery: String? = null, search
 @OptIn(
     ExperimentalMaterial3Api::class, ExperimentalGlideComposeApi::class
 )
-fun Search(navController: NavController) {
+fun Search(navController: NavController, search: String?, searchFilter: String?) {
     var searchQuery by remember { mutableStateOf("") }
     var searchResults by remember { mutableStateOf<List<Book>>(emptyList()) }
     var isActive by remember { mutableStateOf(false) }
     var filter by remember { mutableStateOf("*") }
     var refresh by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
+    if (search != null && searchFilter != null && searchQuery == "") {
+        isActive = true
+        filter = searchFilter
+        searchQuery = search
+    }
 
     LaunchedEffect(searchQuery) {
-        if (searchQuery.isNotEmpty()) {
-            val results = withContext(Dispatchers.IO) {
+        searchResults = if (searchQuery.isNotEmpty()) {
+            withContext(Dispatchers.IO) {
                 db.bookDao().search(searchQuery, filter)
             }
-            searchResults = results
-            Log.d("Results", searchResults.toString())
         } else {
-            searchResults = mutableListOf()
+            withContext(Dispatchers.IO) {
+                db.bookDao().getRandomBooks(30)
+            }
         }
     }
     if (refresh) {
@@ -215,7 +224,7 @@ fun Search(navController: NavController) {
                                         desc += " als ${book.genre}"
                                     }
                                     Text(
-                                        text = desc
+                                        text = desc.trim()
                                     )
                                 }
                             )

@@ -9,7 +9,10 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowColumn
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.material3.AssistChip
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -145,15 +148,23 @@ fun DisplayBookInfo(navController: NavController, recordId: Int, modifier: Modif
             GlideImage(
                 model = book.imgUrl,
                 contentDescription = "Das Cover",
+                modifier = Modifier.height(200.dp)
             )
             FlowColumn(
                 verticalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier
                     .padding(start = 20.dp)
-                //.height(228.dp)
             ) {
                 if (book.year.isNotBlank()) {
                     Text(
+                        modifier = Modifier.clickable {
+                            navController.navigate(
+                                HomeScreen(
+                                    searchQuery = book.getAuthorFormated(true),
+                                    searchFilter = "author:"
+                                )
+                            )
+                        },
                         text = "Autor*in: ${book.getAuthorFormated(true)}",
                         color = MaterialTheme.colorScheme.onBackground
                     )
@@ -173,7 +184,12 @@ fun DisplayBookInfo(navController: NavController, recordId: Int, modifier: Modif
                 if (book.series!!.isNotBlank()) {
                     Text(
                         modifier = Modifier.clickable {
-                            navController.navigate(HomeScreen(searchQuery = book.series, searchFilter = "series:"))
+                            navController.navigate(
+                                HomeScreen(
+                                    searchQuery = book.series.split(";")[0],
+                                    searchFilter = "series:"
+                                )
+                            )
                         },
                         text = "Reihe: ${book.series}",
                         color = MaterialTheme.colorScheme.onBackground
@@ -181,8 +197,73 @@ fun DisplayBookInfo(navController: NavController, recordId: Int, modifier: Modif
                 }
                 if (book.genre.isNotBlank()) {
                     Text(
+                        modifier = Modifier.clickable {
+                            navController.navigate(
+                                HomeScreen(
+                                    searchQuery = book.genre,
+                                    searchFilter = "genre:"
+                                )
+                            )
+                        },
                         text = "Genre: ${book.genre}",
                         color = MaterialTheme.colorScheme.onBackground
+                    )
+                }
+            }
+        }
+        Text(text = "More from: ")
+        LazyRow {
+            item {
+                if (book.year.isNotBlank()) {
+                    AssistChip(
+                        onClick = {
+                            navController.navigate(
+                                HomeScreen(
+                                    searchQuery = book.getAuthorFormated(true),
+                                    searchFilter = "author:"
+                                )
+                            )
+                        },
+                        modifier = Modifier.padding(5.dp),
+                        label = {
+                            Text(text = book.getAuthorFormated(true))
+                        }
+                    )
+                }
+            }
+            item {
+                if (book.series!!.isNotBlank()) {
+                    AssistChip(
+                        onClick = {
+                            navController.navigate(
+                                HomeScreen(
+                                    searchQuery = book.series.split(";")[0],
+                                    searchFilter = "author:"
+                                )
+                            )
+                        },
+                        modifier = Modifier.padding(5.dp),
+                        label = {
+                            Text(text = book.series)
+                        }
+                    )
+                }
+            }
+            item {
+                if (book.genre.isNotBlank()) {
+                    AssistChip(
+                        onClick = {
+                            navController.navigate(
+                                HomeScreen(
+                                    searchQuery = book.genre,
+                                    searchFilter = "genre:"
+                                )
+                            )
+                        },
+                        modifier = Modifier.padding(5.dp),
+                        label = {
+                            Text(text = book.genre)
+                        }
                     )
                 }
             }

@@ -20,13 +20,15 @@ open class Book(
                 .replace("[", "")
                 .replace("]", "")
                 .split(",")
-            var output = if (names.size == 4) {
-                "${names[1]} ${names[0]} und ${names[3]} ${names[2]}"
+            var output = if (names.size == 6){
+                "${names[1]} ${names[0]},${names[3]} ${names[2]} und${names[5]} ${names[4]}"
+            }else if (names.size == 4) {
+                "${names[1]} ${names[0]} und${names[3]} ${names[2]}"
             } else {
                 "${names[1]} ${names[0]}"
             }
             if (!onlyName) {
-                output = "Von $output"
+                output = "Von$output"
             }
             return output
         } catch (e: Exception) {

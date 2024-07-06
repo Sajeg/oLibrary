@@ -109,8 +109,8 @@ class MainActivity : ComponentActivity() {
         val currentDestination = navBackStackEntry?.destination
         NavigationBar {
             NavigationBarItem(
-                selected = if (currentDestination != null) currentDestination.route == "com.sajeg.olibrary.HomeScreen" else false,
-                onClick = { navController.navigate(HomeScreen) },
+                selected = if (currentDestination != null) currentDestination.route == "com.sajeg.olibrary.HomeScreen?searchQuery={searchQuery}&searchFilter={searchFilter}" else false,
+                onClick = { navController.navigate(HomeScreen(null, null)) },
                 icon = {
                     Icon(
                         painter = painterResource(id = R.drawable.home),
