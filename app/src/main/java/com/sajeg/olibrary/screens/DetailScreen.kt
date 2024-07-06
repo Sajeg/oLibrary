@@ -119,7 +119,6 @@ fun DisplayBookInfo(recordId: Int, modifier: Modifier, book: Book) {
     LaunchedEffect(key1 = book.imgUrl) {
         withContext(Dispatchers.IO) {
             val futureTarget = glideImage.submit()
-            Log.d("ImageFutur", futureTarget.get().height.toString())
             imageHeight.intValue = futureTarget.get().height
             futureTarget.cancel(false)
         }

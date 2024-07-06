@@ -20,6 +20,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.SearchBar
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -62,17 +65,19 @@ fun HomeScreen(navController: NavController) {
                 }
             }
         } else {
-            LazyRow (
+            LazyRow(
                 modifier = Modifier.padding(horizontal = 15.dp)
-            ){
+            ) {
                 for (book in recommendations!!) {
                     item {
                         GlideImage(
                             model = book.imgUrl,
                             contentDescription = "Recommendation",
-                            modifier = Modifier.size(height = 200.dp, width = 150.dp).clickable {
-                                navController.navigate(Details(book.rowid!!, book.title))
-                            }
+                            modifier = Modifier
+                                .size(height = 200.dp, width = 150.dp)
+                                .clickable {
+                                    navController.navigate(Details(book.rowid!!, book.title))
+                                }
                         )
                     }
                 }
@@ -89,13 +94,13 @@ fun Search(navController: NavController) {
     var searchQuery by remember { mutableStateOf("") }
     var searchResults by remember { mutableStateOf<List<Book>>(emptyList()) }
     var isActive by remember { mutableStateOf(false) }
-
+    var filter by remember { mutableStateOf("*") }
 
 
     LaunchedEffect(searchQuery) {
         if (searchQuery.isNotEmpty()) {
             val results = withContext(Dispatchers.IO) {
-                db.bookDao().search(searchQuery)
+                db.bookDao().search(searchQuery, filter)
             }
             searchResults = results
             Log.d("Results", searchResults.toString())
@@ -127,6 +132,46 @@ fun Search(navController: NavController) {
             },
             trailingIcon = {},
             content = {
+                SingleChoiceSegmentedButtonRow(
+                    modifier = Modifier.padding(vertical = 5.dp, horizontal = 10.dp)
+                ) {
+                    val count = 5
+                    SegmentedButton(
+                        selected = filter == "*",
+                        onClick = { filter = "*" },
+                        shape = SegmentedButtonDefaults.itemShape(0, count)
+                    ) {
+                        Text(text = "All")
+                    }
+                    SegmentedButton(
+                        selected = filter == "title:",
+                        onClick = { filter = "title:" },
+                        shape = SegmentedButtonDefaults.itemShape(1, count)
+                    ) {
+                        Text(text = "Title")
+                    }
+                    SegmentedButton(
+                        selected = filter == "author:",
+                        onClick = { filter = "author:" },
+                        shape = SegmentedButtonDefaults.itemShape(2, count)
+                    ) {
+                        Text(text = "Author")
+                    }
+                    SegmentedButton(
+                        selected = filter == "series:",
+                        onClick = { filter = "series:" },
+                        shape = SegmentedButtonDefaults.itemShape(3, count)
+                    ) {
+                        Text(text = "Series")
+                    }
+                    SegmentedButton(
+                        selected = filter == "genre:",
+                        onClick = { filter = "genre:" },
+                        shape = SegmentedButtonDefaults.itemShape(4, count)
+                    ) {
+                        Text(text = "Genre")
+                    }
+                }
                 LazyColumn {
                     for (book in searchResults) {
                         item {
